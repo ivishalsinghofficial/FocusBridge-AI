@@ -14,12 +14,12 @@ let extractor;
 async function init() {
     if (extractor) return;
     try {
-        console.log("AI: Loading engine from CDN...");
+        //console.log("AI: Loading engine from CDN...");
         
         // This downloads the model weights from HuggingFace
         extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
         
-        console.log("AI: Engine is ready and model is loaded!");
+        //console.log("AI: Engine is ready and model is loaded!");
     } catch (e) {
         console.error("AI: Initialization failed!", e);
     }
@@ -48,7 +48,7 @@ chrome.runtime.onMessage.addListener(async (message) => {
 
         const score = cosineSimilarity(Array.from(goalOutput.data), Array.from(pageOutput.data));
         
-        console.log(`AI Check: "${message.title}" | Score: ${score.toFixed(2)}`);
+        //console.log(`AI Check: "${message.title}" | Score: ${score.toFixed(2)}`);
 
         chrome.runtime.sendMessage({ 
             target: 'background', 
