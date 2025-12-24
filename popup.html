@@ -14,7 +14,7 @@
       --ledger-text: #444444; /* Black in Light Mode */
       --ledger-border: #f5f5f5;
       --subtask-text: #1a1a1a;
-      
+      --scroller: #444444 #ffffff;
     }
 
     /* DARK MODE OVERRIDES (Onyx & Slate) */
@@ -28,6 +28,7 @@
       --ledger-text: #ffffff; /* White in Dark Mode as requested */
       --ledger-border: #222222;
       --subtask-text: #e0e0e0;
+      --scroller: #444444 #121212;
     }
 
     /* 2. CORE LAYOUT */
@@ -57,11 +58,11 @@
       background-color: #ccc; transition: .4s; border-radius: 20px;
     }
     .slider:before {
-      position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px;
+      position: absolute; content: ""; height: 11px; width: 12px; left: 3px; bottom: 3px;
       background-color: white; transition: .4s; border-radius: 50%;
     }
     input:checked + .slider { background-color: var(--primary); }
-    input:checked + .slider:before { transform: translateX(12px); }
+    input:checked + .slider:before { transform: translateX(11px); }
 
     /* 4. FOCUS TAB COMPONENTS */
     .goal-label { font-size: 10px; text-transform: uppercase; color: #888; font-weight: bold; display: block; margin: 15px 0 5px 0; }
@@ -141,6 +142,46 @@
     .scroller{
       scrollbar-color: grey grey ;
     }
+
+    /* PRO BADGE STYLING */
+    .pro-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 6px;
+      margin-left: 8px;
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-radius: 4px;
+      
+      /* Standard colors for branding */
+      background: var(--primary);
+      color: #000;
+      box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+      
+      /* Smooth transition for theme switch */
+      transition: all 0.3s ease;
+    }
+
+    /* Dark Mode specific glow */
+    body.dark-mode .pro-badge {
+      background: var(--primary);
+      color: #000;
+      box-shadow: 0 0 12px rgba(255, 165, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Subtle pulse animation to make it feel "active" */
+    @keyframes proPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .pro-badge:hover {
+      animation: proPulse 0.5s ease-in-out infinite;
+    }
 </style>
 </head>
 <body>
@@ -148,7 +189,7 @@
   <div class="header">
     <div style="display: flex; align-items: center; gap: 8px;">
         <img src="icon48.png" style="width: 18px; height: 18px;">
-        <h2>FOCUSBRIDGE AI</h2>
+        <h2>FOCUSBRIDGE AI <span class="pro-badge">PRO</span></h2>
     </div>
     <!-- THE TOGGLE SWITCH -->
     <label class="theme-switch" style="position: relative; display: inline-block; width: 30px; height: 16px;">
@@ -168,7 +209,7 @@
 
         <div class="story-card">
           <div class="goal-label" style="color: var(--primary); margin-bottom: 8px;">Today's Discipline Blueprint</div>
-          <div style="max-height: 160px; overflow-y: auto; padding-right: 5px;">
+          <div style="max-height: 160px; scrollbar-color: var(--scroller); overflow-y: auto; padding-right: 5px;">
           <p id="storyText"></p> <!-- Color/size handled by CSS now -->
           </div>
         </div>
