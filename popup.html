@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    /* 1. MASTER THEME VARIABLES */
+    :root { 
+      --primary: #ffa500; 
+      --bg: #ffffff; 
+      --card: #f8f9fa; 
+      --text: #1a1a1a; 
+      --border: #eeeeee; 
+      --gray: #f0f0f0;
+      --pomo-bg: #fffaf0;
+      --ledger-text: #444444; /* Black in Light Mode */
+      --ledger-border: #f5f5f5;
+      --subtask-text: #1a1a1a;
+      
+    }
+
+    /* DARK MODE OVERRIDES (Onyx & Slate) */
+    body.dark-mode {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #e0e0e0;
+      --border: #333333;
+      --gray: #2a2a2a;
+      --pomo-bg: #1a160d;
+      --ledger-text: #ffffff; /* White in Dark Mode as requested */
+      --ledger-border: #222222;
+      --subtask-text: #e0e0e0;
+    }
+
+    /* 2. CORE LAYOUT */
+    body { 
+      width: 350px; margin: 0; font-family: 'Segoe UI', sans-serif; height: 530px; 
+      display: flex; flex-direction: column; overflow: hidden; 
+      background-color: var(--bg); color: var(--text);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    
+    .header { 
+      background: var(--card); color: var(--text); padding: 15px; 
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .header h2 { margin: 0; font-size: 14px; letter-spacing: 2px; font-weight: 800; text-transform: uppercase; }
+
+    .content-area { flex-grow: 1; overflow-y: auto; padding-bottom: 60px; }
+    .tab-content { display: none; padding: 20px; background-color: var(--bg); }
+    .tab-content.active { display: block; }
+
+    /* 3. THEME TOGGLE SWITCH */
+    .theme-switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+    .theme-switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(12px); }
+
+    /* 4. FOCUS TAB COMPONENTS */
+    .goal-label { font-size: 10px; text-transform: uppercase; color: #888; font-weight: bold; display: block; margin: 15px 0 5px 0; }
+    
+    input { 
+      width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; 
+      box-sizing: border-box; background: var(--gray); color: var(--text); outline: none;
+    }
+    input:focus { border-color: var(--primary); }
+
+    .btn { width: 100%; padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-primary { background: var(--primary); color: black; }
+    .btn-secondary { background: var(--primary); color: #000; margin-top: 10px; }
+
+    .story-card {
+      margin-top: 25px; padding: 15px; 
+      background: var(--card); 
+      border-radius: 10px; border: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+    #storyText { color: var(--text); font-size: 11px; line-height: 1.6; opacity: 0.9; }
+
+    /* 5. SUBTASK & POMO STYLING */
+    .task-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; color: var(--subtask-text); }
+    .task-item input { width: auto; margin: 0; cursor: pointer; }
+    .completed { text-decoration: line-through; color: #888 !important; opacity: 0.6; }
+
+    .pomo-box { background: var(--pomo-bg); padding: 15px; border-radius: 8px; border: 1px dashed var(--primary); margin-top: 20px; }
+    .timer-display { font-size: 28px; font-weight: bold; text-align: center; margin: 5px 0; font-variant-numeric: tabular-nums; color: var(--text); }
+
+    /* 6. RULES LEDGER (Contrast Optimized) */
+    .ledger-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px; border-bottom: 1px solid var(--ledger-border); font-size: 12px;
+    }
+    .ledger-domain { 
+      flex-grow: 1; font-family: monospace; 
+      color: var(--ledger-text); /* Dynamic flip White/Black */
+      font-weight: 500;
+    }
+    .badge { padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: bold; text-transform: uppercase; margin-right: 10px; }
+    .badge-block { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    body.dark-mode .badge-block { background: #3d1a1a; color: #ff8080; border: 1px solid #5c2626; }
+    .badge-safe { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    body.dark-mode .badge-safe { background: #1a3d1a; color: #80ff80; border: 1px solid #265c26; }
+
+    .trash-btn { background:#ff4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-size:10px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
+
+    /* 7. NAVIGATION RIBBON */
+    .nav-ribbon { 
+      display: flex; border-top: 1px solid var(--border); background: var(--card); 
+      padding: 10px 0; position: fixed; bottom: 0; width: 100%; z-index: 100; 
+    }
+    .nav-item { flex: 1; text-align: center; font-size: 10px; color: #888; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+    .nav-item.active { color: var(--primary); }
+
+    /* 8. ALL KEYFRAMES & OVERLAYS */
+    @keyframes breathe {
+      0% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.8); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 0.3; }
+    }
+    .breathe-anim { animation: breathe 4s infinite ease-in-out; }
+
+    #mindfulOverlay { 
+      display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+      background: var(--bg); z-index: 1000; flex-direction:column; 
+      align-items:center; justify-content:space-between; text-align:center; 
+      padding: 60px 20px; box-sizing: border-box; 
+    }
+
+    /* Stats Styling */
+    .chart-container { position: relative; margin: auto; height: 150px; width: 150px; }
+    .chart-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .big-num { display: block; font-size: 22px; font-weight: bold; color: var(--text); }
+
+    .scroller{
+      scrollbar-color: grey grey ;
+    }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <img src="icon48.png" style="width: 18px; height: 18px;">
+        <h2>FOCUSBRIDGE AI</h2>
+    </div>
+    <!-- THE TOGGLE SWITCH -->
+    <label class="theme-switch" style="position: relative; display: inline-block; width: 30px; height: 16px;">
+        <input type="checkbox" id="themeToggle" style="opacity: 0; width: 0; height: 0;">
+        <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px;"></span>
+    </label>
+  </div>
+
+  <div class="content-area">
+    <!-- TAB 1: FOCUS -->
+    <div id="tab-focus" class="tab-content active">
+      <div id="setup-view">
+         
+        <label class="goal-label">What is your Intent?</label>
+        <input type="text" id="mainGoalInput" placeholder="e.g. Coding Website">
+        <button id="startFocusBtn" class="btn btn-primary" style="margin-top: 15px;">START FOCUS MODE</button>
+
+        <div class="story-card">
+          <div class="goal-label" style="color: var(--primary); margin-bottom: 8px;">Today's Discipline Blueprint</div>
+          <div style="max-height: 160px; overflow-y: auto; padding-right: 5px;">
+          <p id="storyText"></p> <!-- Color/size handled by CSS now -->
+          </div>
+        </div>
+
+      </div>
+
+      <div id="active-view" style="display:none;">
+        <label class="goal-label">Current Goal</label>
+        <h3 id="displayGoal" style="margin: 0;">---</h3>
+        
+        <!-- Checklist Sub-module -->
+        <label class="goal-label">Sub-tasks</label>
+        <div id="taskList"></div>
+        <div style="display: flex; gap: 5px; margin-top: 10px;">
+          <input type="text" id="subTaskInput" placeholder="Add step...">
+          <button id="addSubTaskBtn" class="btn btn-primary" style="width:40px; padding:0;">+</button>
+        </div>
+
+        <!-- Pomodoro Sub-module (Optional) -->
+        <div class="pomo-box">
+          <label class="goal-label" style="margin:0; color: var(--primary);">Pomodoro Timer</label>
+          <div id="pomo-setup">
+            <input type="number" id="pomoMins" value="25" style="width: 60px; display: inline-block;"> mins
+            <button id="startPomoBtn" class="btn btn-primary" style="width: auto; padding: 5px 15px; float: right;">Start</button>
+          </div>
+          <div id="pomo-active" style="display: none;">
+            <div class="timer-display" id="timerOutput">00:00</div>
+            <button id="stopPomoBtn" class="btn btn-secondary" style="width: 100%; padding: 5px; font-size: 11px;">Cancel Timer</button>
+          </div>
+        </div>
+
+        <button id="endFocusBtn" class="btn btn-secondary" style="margin-top: 25px;">END FOCUS SESSION</button>
+      </div>
+    </div>
+
+    <!-- TAB 2: STATS -->
+    <div id="tab-stats" class="tab-content">
+      <label class="goal-label">Today's Progress</label>
+      <div class="chart-container">
+        <canvas id="dailyWheel"></canvas>
+        <div class="chart-label">
+          <span class="big-num" id="todayMins">0</span>
+          <span style="font-size: 9px; color: #888;">MINS</span>
+        </div>
+      </div>
+      <label class="goal-label" style="margin-top: 25px;">7-Day History</label>
+      <canvas id="weeklyBarChart"></canvas>
+    </div>
+
+    <!-- TAB 3: RULES (New Ledger Design) -->
+    <div id="tab-rules" class="tab-content">
+      <!-- Smart Suggest Row -->
+      <div style="background: #fffaf0; padding: 12px; border-radius: 8px; border: 1px solid #ffe0b2; margin-bottom: 20px;">
+        <div class="goal-label" style="color: #e65100;">Current Site Suggester</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px;">
+          <span id="currentDomainText" style="font-weight: bold; font-size: 13px; color:#000">Detecting...</span>
+          <div style="display: flex; gap: 5px;">
+            <button id="quickAddSafe" class="btn btn-primary" style="margin:0; padding: 5px 10px; font-size: 11px; background: #2e7d32; color: white;">+ Safe</button>
+            <button id="quickAddBlock" class="btn btn-primary" style="margin:0; padding: 5px 10px; font-size: 11px; background: #d32f2f; color: white;">+ Block</button>
+          </div>
+        </div>
+      </div>
+
+  <label class="goal-label">Domain Rules Ledger</label>
+  <!-- The scrolling list of rules -->
+  <div id="rulesLedger" style="margin-top: 10px; max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+    <!-- Rows will appear here like: [domain] [Badge] [Delete] -->
+  </div>
+</div>
+
+    <!-- TAB 4: AI COACH -->
+<div id="tab-ai" class="tab-content">
+  <div style="background: #1a1a1a; padding: 20px; border-radius: 12px; color: white; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+    <div class="goal-label" style="color: #ffa500;">Coach Reflection</div>
+    <div id="aiText" style="font-size: 14px; line-height: 1.6; min-height: 60px; margin-top: 10px;">
+      Analyzing focus patterns...
+    </div>
+  </div>
+
+  <div id="coachTips" style="display:none;">
+    <label class="goal-label">Mindful Toolkit</label>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button id="struggleBtn" class="btn" style="background: #fff; border: 1px solid #ddd; font-size: 11px; padding: 10px 5px;">BREATHING</button>
+      <button id="groundingBtn" class="btn" style="background: #fff; border: 1px solid #ddd; font-size: 11px; padding: 10px 5px;">GROUNDING</button>
+    </div>
+
+    <button id="affirmationBtn" class="btn" style="background: #fff; border: 1px solid #ddd; font-size: 11px; margin-top: 10px;">POSITIVE AFFIRMATION</button>
+    <button id="architectBtn" class="btn" style="background: #fff; border: 1px solid #ddd; font-size: 11px; margin-top: 10px; color: #e67e22; border-color: #e67e22;">PLAN SUB-TASKS</button>
+  </div>
+</div>
+
+<!-- UNIVERSAL MINDFUL OVERLAY (Fixed Layout) -->
+<div id="mindfulOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:1000; flex-direction:column; align-items:center; justify-content:space-between; text-align:center; padding: 60px 20px; box-sizing: border-box;">
+    
+    <!-- Zone 1: The Content (Animation or Text) -->
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+        <div id="circleContainer" style="height: 150px; display: flex; align-items: center; justify-content: center;">
+            <div id="breathingCircle" style="width: 60px; height: 60px; background: #ffa500; border-radius: 50%; opacity: 0.6; display: none;"></div>
+        </div>
+        <h2 id="mindfulTitle" style="color:#333; margin: 20px 0 10px 0; font-size: 20px;">Exercise</h2>
+        <p id="mindfulDesc" style="color: #666; font-size: 14px; line-height: 1.5; max-width: 250px;">Follow the prompts buddy.</p>
+    </div>
+
+    <!-- Zone 2: The Exit -->
+    <button id="closeMindfulBtn" class="btn" style="width:auto; padding: 12px 30px; background:#1a1a1a; color: white;">I feel better now</button>
+</div>
+
+<!-- Breathing Overlay (Hidden by default) -->
+<div id="breathingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:1000; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+    <div id="breathingCircle" style="width: 100px; height: 100px; background: #ffa500; border-radius: 50%; opacity: 0.6;"></div>
+    <h2 id="breathText" style="margin-top:30px; color:#333;">Breathe In</h2>
+    <button id="closeBreathBtn" class="btn" style="width:auto; padding: 10px 20px; background:#eee; margin-top:40px;">I feel better now</button>
+</div>
+
+  <div class="nav-ribbon">
+    <div class="nav-item active" data-tab="tab-focus">Focus</div>
+    <div class="nav-item" data-tab="tab-stats">Stats</div>
+    <div class="nav-item" data-tab="tab-rules">Rules</div>
+    <div class="nav-item" data-tab="tab-ai">Buddy</div>
+  </div>
+
+  <script src="chart.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
