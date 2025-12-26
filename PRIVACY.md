@@ -27,3 +27,6 @@ We do not sell, trade, or share your information. Period.
 
 ## 5. Open Source Transparency
 As an open-source project, our code is fully auditable. You can verify exactly how we handle your data by visiting our [GitHub Repository](https://github.com/ivishalsinghofficial/FocusBridge-AI).
+
+## 6. Support & Queries
+Mail me at ivishalsinghofficial@gmail.com
