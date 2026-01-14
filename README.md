@@ -9,6 +9,12 @@
 
 **FocusBridge AI** is not just another site blocker. It is a cognitive safety net designed to bridge the gap between your **intentions** and your **actions**. By leveraging on-device Small Language Models (SLMs), it understands the *context* of your browsing habits and provides "Soft Friction" to keep you aligned with your goals.
 
+### Download
+
+<a href="https://chromewebstore.google.com/search/FocusBridge%20AI%3A%20Smart%20Nudge%20for%20ADHD%20%26%20Deep%20Work">
+  <img src="https://developer.chrome.com/static/docs/webstore/branding/image/UV4C4ybeBTsZt43U4xis.png" alt="Available in the Chrome Web Store" height="60">
+</a>
+
 ---
 
 ## 🚀 The Problem
