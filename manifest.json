@@ -42,7 +42,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src https://huggingface.co https://*.huggingface.co https://cdn.jsdelivr.net;"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net;"
   },
   "minimum_chrome_version": "116"
 }
