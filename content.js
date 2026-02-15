@@ -1,11 +1,18 @@
 /**
- * CONTENT.JS - FocusBridge AI (Robust + Elastic UI Edition)
+ * CONTENT.JS - FocusBridge AI (Robust + Elastic UI Edition + Recall Anchor)
  */
 
 let activeGoalText = "";
 let isDistractionMode = false;
 let isNudgeActive = false;
 let currentTheme = 'light';
+
+// RECALL ANCHOR VARIABLES
+let recallActive = false;
+let lastScrollDepth = 0;
+let timeOnPage = 0;
+let lastRecallScroll = 0; // Prevent duplicate prompts
+let recallTimerInterval = null;
 
 // Helper: Check if the extension context is still alive
 function isValid() {
@@ -38,11 +45,23 @@ const updateBubbleTheme = (theme) => {
 
   const isDark = theme === 'dark';
   bubble.style.background = isDark ? "#1a1a1a" : "#ffffff";
-  bubble.style.color = isDark ? "#ffffff" : "#1a1a1a";
-  bubble.style.borderColor = isDark ? "#333" : "#ddd";
+  bubble.style.borderColor = isDark ? "#333" : "#e0e0e0";
+  bubble.style.boxShadow = isDark ? "0 8px 30px rgba(0,0,0,0.5)" : "0 8px 25px rgba(0,0,0,0.15)";
 
   const goalText = document.getElementById("bubbleGoalText");
-  if (goalText) goalText.style.color = "#000";
+  if (goalText) goalText.style.color = isDark ? "#fff" : "#000";
+
+  const mins = document.getElementById("pomoMins");
+  if (mins) mins.style.color = isDark ? "#eee" : "#333";
+
+  const circleBg = bubble.querySelector('circle[stroke-width="3"]:first-child');
+  if (circleBg) circleBg.setAttribute("stroke", isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)");
+
+  const quizBtn = document.getElementById("focus-quiz-btn");
+  if (quizBtn) {
+    quizBtn.style.background = isDark ? '#333' : '#f5f5f5';
+    quizBtn.style.color = isDark ? '#aaa' : '#666';
+  }
 };
 
 // 3. RENDER THE TOP ORANGE FLASH
@@ -61,32 +80,39 @@ function renderOrangeFlash(goal) {
   document.documentElement.appendChild(glow);
 }
 
-// 4. RENDER THE FLUID BUBBLE (FIXED: Elastic width + Zero-Hiccup spawn)
+// 4. RENDER THE FLUID BUBBLE
+// 4. RENDER THE FLUID BUBBLE
 function renderFocusBubble(goal, isDistracted = false) {
   if (document.getElementById("focus-bubble-root")) return;
   activeGoalText = goal;
 
   const bubble = document.createElement("div");
   bubble.id = "focus-bubble-root";
+  const isDark = currentTheme === 'dark';
 
   // Decide initial shape based on distraction state
   const initialWidth = isDistracted ? "auto" : "60px";
   const initialRadius = isDistracted ? "12px" : "30px";
 
+  // Base Variables
+  const bg = isDark ? "#1a1a1a" : "#ffffff";
+  const border = isDark ? "#333" : "#e0e0e0";
+  const shadow = isDark ? "0 8px 30px rgba(0,0,0,0.5)" : "0 8px 25px rgba(0,0,0,0.15)";
+
   Object.assign(bubble.style, {
     position: "fixed", bottom: "30px", right: "30px",
     width: initialWidth, height: "60px",
     minWidth: isDistracted ? "140px" : "60px",
-    maxWidth: "280px",
+    maxWidth: "400px", // Constrain max width
     zIndex: "2147483647", cursor: "grab", borderRadius: initialRadius,
     display: "flex", alignItems: "center", justifyContent: "center",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.2)", userSelect: "none", overflow: "hidden",
-    border: "2px solid #ddd", background: "#fff",
-    // Disable transition initially to prevent the "circle-to-box" growth flicker
-    transition: "none"
+    boxShadow: shadow, userSelect: "none", overflow: "hidden",
+    border: `1px solid ${border}`, background: bg,
+    transition: "width 0.3s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s, box-shadow 0.3s"
   });
 
   // Create Pomo Container (State 1)
+  constomoContainer = document.createElement('div');
   const pomoContainer = document.createElement('div');
   pomoContainer.id = "pomoContainer";
   Object.assign(pomoContainer.style, {
@@ -101,7 +127,8 @@ function renderFocusBubble(goal, isDistracted = false) {
 
   const circleBg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
   circleBg.setAttribute("cx", "30"); circleBg.setAttribute("cy", "30"); circleBg.setAttribute("r", "26");
-  circleBg.setAttribute("stroke", "rgba(128,128,128,0.1)"); circleBg.setAttribute("stroke-width", "3");
+  circleBg.setAttribute("stroke", isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)");
+  circleBg.setAttribute("stroke-width", "3");
   circleBg.setAttribute("fill", "none");
 
   const circleRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -118,7 +145,7 @@ function renderFocusBubble(goal, isDistracted = false) {
 
   const minsSpan = document.createElement('span');
   minsSpan.id = "pomoMins";
-  minsSpan.style.cssText = "font-size: 14px; font-weight: 800; font-family: sans-serif;";
+  minsSpan.style.cssText = `font-size: 14px; font-weight: 700; font-family: 'Inter', sans-serif; color:${isDark ? '#eee' : '#333'};`;
   minsSpan.innerText = "--";
 
   pomoContainer.appendChild(svg);
@@ -128,40 +155,114 @@ function renderFocusBubble(goal, isDistracted = false) {
   const bubbleContent = document.createElement('div');
   bubbleContent.id = "bubbleContent";
   Object.assign(bubbleContent.style, {
-    display: isDistracted ? 'block' : 'none', padding: "0 15px", whiteSpace: "nowrap", textAlign: "center"
+    display: isDistracted ? 'flex' : 'none',
+    alignItems: 'center',
+    padding: "0 10px 0 0",
+    height: "100%",
+    maxWidth: "100%",
+    overflow: "hidden"
   });
 
+  // Text Container
+  const textContainer = document.createElement('div');
+  textContainer.style.cssText = "display:flex; flex-direction:column; justify-content:center; padding:0 12px; overflow:hidden;";
+
   const targetLabel = document.createElement('div');
-  targetLabel.innerText = "Target";
-  targetLabel.style.cssText = "font-size:8px; font-weight:800; color:#ffa500; text-transform:uppercase; margin-bottom:3px; letter-spacing:1px;";
+  targetLabel.innerText = "FOCUS GOAL";
+  targetLabel.style.cssText = `font-size:9px; font-weight:700; color:#aaa; letter-spacing:0.5px; margin-bottom:2px;`;
 
   const goalTextEl = document.createElement('div');
   goalTextEl.id = "bubbleGoalText";
-  goalTextEl.innerText = goal;
-  goalTextEl.style.cssText = "color: #000; font-weight: 800; font-size: 13px; background: #ffa500; padding: 5px 12px; border-radius: 6px; display: inline-block;";
+  // Truncate text strictly to 15 chars + ...
+  const displayGoal = goal.length > 15 ? goal.substring(0, 15) + "..." : goal;
+  goalTextEl.innerText = displayGoal;
+  goalTextEl.title = goal; // Tooltip for full text
 
-  bubbleContent.appendChild(targetLabel);
-  bubbleContent.appendChild(goalTextEl);
+  goalTextEl.style.cssText = `
+    color: ${isDark ? '#fff' : '#000'}; 
+    font-weight: 600; 
+    font-size: 13px; 
+    line-height: 1.3;
+    overflow: hidden;
+    white-space: nowrap;
+  `;
+
+  textContainer.appendChild(targetLabel);
+  textContainer.appendChild(goalTextEl);
+
+  // Add Quiz Button (Sleek Style)
+  const quizBtn = document.createElement('div');
+  quizBtn.id = "focus-quiz-btn";
+  // Use SVG for Brain (Borderline/Outline Style)
+  const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svgIcon.setAttribute("width", "20");
+  svgIcon.setAttribute("height", "20");
+  svgIcon.setAttribute("viewBox", "0 0 24 24");
+  svgIcon.setAttribute("fill", "none");
+  svgIcon.setAttribute("stroke", "currentColor");
+  svgIcon.setAttribute("stroke-width", "2");
+  svgIcon.setAttribute("stroke-linecap", "round");
+  svgIcon.setAttribute("stroke-linejoin", "round");
+
+  const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path1.setAttribute("d", "M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z");
+
+  const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path2.setAttribute("d", "M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z");
+
+  svgIcon.appendChild(path1);
+  svgIcon.appendChild(path2);
+  quizBtn.appendChild(svgIcon);
+  quizBtn.title = "Take a Quiz";
+  quizBtn.style.cssText = `
+    cursor:pointer; 
+    margin-left:8px; 
+    width:36px; height:36px; flex-shrink:0;
+    border-radius:10px; 
+    background:${isDark ? '#333' : '#f5f5f5'}; 
+    color:${isDark ? '#aaa' : '#666'};
+    display:flex; align-items:center; justify-content:center; 
+    transition:all 0.2s ease;
+  `;
+
+  quizBtn.onmouseover = () => {
+    quizBtn.style.background = isDark ? '#444' : '#e0e0e0';
+    quizBtn.style.color = '#ffa500';
+    quizBtn.style.transform = 'scale(1.05)';
+  };
+  quizBtn.onmouseout = () => {
+    quizBtn.style.background = isDark ? '#333' : '#f5f5f5';
+    quizBtn.style.color = isDark ? '#aaa' : '#666';
+    quizBtn.style.transform = 'scale(1)';
+  };
+
+  quizBtn.onclick = (e) => {
+    e.stopPropagation();
+    renderRecallSetupModal();
+  };
+
+  bubbleContent.appendChild(textContainer);
+  bubbleContent.appendChild(quizBtn);
 
   bubble.appendChild(pomoContainer);
   bubble.appendChild(bubbleContent);
 
   document.documentElement.appendChild(bubble);
 
-  // Turn transitions back on after a tiny delay so future hovers remain smooth
-  setTimeout(() => {
-    if (bubble) bubble.style.transition = "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s, border-radius 0.3s";
-  }, 50);
-
+  // Hover Interactions
   bubble.onmouseenter = () => { if (isValid() && !isDistractionMode) expandBubble(); };
   bubble.onmouseleave = () => { if (isValid() && !isDistractionMode) collapseBubble(); };
 
+  // Drag Logic
   let isDragging = false;
   bubble.onmousedown = (e) => {
+    if (e.target.closest('#focus-quiz-btn')) return;
     if (!isValid()) return;
+
     isDragging = true;
     let startX = e.clientX - bubble.offsetLeft;
     let startY = e.clientY - bubble.offsetTop;
+    bubble.style.transition = 'none'; // Disable transition during drag
 
     document.onmousemove = (e) => {
       if (!isDragging) return;
@@ -170,12 +271,12 @@ function renderFocusBubble(goal, isDistracted = false) {
       bubble.style.right = 'auto'; bubble.style.bottom = 'auto';
     };
 
-    document.onmouseup = () => { isDragging = false; document.onmousemove = null; };
+    document.onmouseup = () => {
+      isDragging = false;
+      document.onmousemove = null;
+      bubble.style.transition = "width 0.3s, background 0.3s, box-shadow 0.3s"; // Restore
+    };
   };
-
-  chrome.storage.local.get(['theme'], (res) => {
-    if (isValid()) updateBubbleTheme(res.theme || 'light');
-  });
 }
 
 function expandBubble() {
@@ -185,11 +286,16 @@ function expandBubble() {
   if (!bubble) return;
 
   bubble.style.width = "auto";
-  bubble.style.minWidth = "160px";
-  bubble.style.borderRadius = "12px";
+  bubble.style.borderRadius = "14px";
+  bubble.style.paddingRight = "6px"; // Extra padding for button
 
-  if (pomo) pomo.style.display = isDistractionMode ? "none" : "flex";
-  if (content) content.style.display = "block";
+  if (pomo) pomo.style.display = isDistractionMode ? "none" : "flex"; // Keep pomo visible!
+  // Wait, design choice: Do we hide timer on expand? 
+  // User said "hovering expands". Usually we show text alongside timer.
+  // My previous code: `display: isDistracted ? 'none' : 'flex'`. 
+  // Let's keep timer visible on left, text on right.
+
+  if (content) content.style.display = "flex";
 }
 
 function collapseBubble() {
@@ -198,8 +304,8 @@ function collapseBubble() {
   const content = document.getElementById("bubbleContent");
   if (bubble && !isDistractionMode) {
     bubble.style.width = "60px";
-    bubble.style.minWidth = "60px";
     bubble.style.borderRadius = "30px";
+    bubble.style.paddingRight = "0";
     if (content) content.style.display = "none";
     if (pomo) pomo.style.display = "flex";
   }
@@ -219,6 +325,429 @@ setInterval(async () => {
     ring.style.strokeDashoffset = 164 * (1 - (remaining / (res.workDuration * 60000)));
   });
 }, 1000);
+
+// ==========================================
+// RECALL ANCHOR LOGIC (Manual Mode)
+// ==========================================
+
+function renderRecallSetupModal() {
+  if (document.getElementById('recall-setup-overlay')) return;
+
+  const overlay = createBaseOverlay('recall-setup-overlay');
+  document.documentElement.appendChild(overlay);
+
+  const box = overlay.querySelector('#recall-content-box');
+  box.innerHTML = ''; // Clear default loader
+
+  const isDark = currentTheme === 'dark';
+  const textColor = isDark ? '#e0e0e0' : '#333';
+  const subTextColor = isDark ? '#aaa' : '#666';
+  const borderColor = isDark ? '#333' : '#eee';
+  const btnBg = isDark ? '#2c2c2c' : 'white';
+  const btnBorder = isDark ? '#444' : '#ddd';
+
+  // Close Button
+  const closeBtn = document.createElement('div');
+  closeBtn.innerHTML = "&times;";
+  closeBtn.style.cssText = `
+    position:absolute; top:10px; right:15px; 
+    font-size:24px; cursor:pointer; color:${subTextColor}; 
+    line-height:1; z-index:10; transition:color 0.2s;
+  `;
+  closeBtn.onmouseover = () => closeBtn.style.color = '#ffa500';
+  closeBtn.onmouseout = () => closeBtn.style.color = subTextColor;
+  closeBtn.onclick = () => overlay.remove();
+  box.appendChild(closeBtn);
+
+  // Header
+  const header = document.createElement('div');
+  header.style.cssText = `padding:20px; border-bottom:1px solid ${borderColor}; font-weight:bold; color:${textColor}; font-size:18px;`;
+  header.innerText = "Recall Challenge Setup";
+  box.appendChild(header);
+
+  // Body
+  const body = document.createElement('div');
+  body.style.cssText = "padding:25px; text-align:left;";
+
+  // 1. Difficulty
+  const labelDiff = document.createElement('div');
+  labelDiff.innerText = "Difficulty Level";
+  labelDiff.style.cssText = `font-size:13px; font-weight:bold; color:${subTextColor}; margin-bottom:10px;`;
+  body.appendChild(labelDiff);
+
+  const diffContainer = document.createElement('div');
+  diffContainer.style.cssText = "display:flex; gap:10px; margin-bottom:20px;";
+  let selectedDiff = "Moderate";
+
+  ['Easy', 'Moderate', 'Legend'].forEach(level => {
+    const btn = document.createElement('button');
+    btn.innerText = level;
+    btn.className = 'recall-opt-btn';
+
+    // Default Style
+    const styleDefault = `flex:1; padding:10px; border:1px solid ${level === 'Moderate' ? '#ffa500' : btnBorder}; background:${level === 'Moderate' ? '#fff3e0' : btnBg}; border-radius:8px; cursor:pointer; font-weight:600; color:${level === 'Moderate' ? '#ffa500' : subTextColor};`;
+
+    btn.style.cssText = styleDefault;
+
+    btn.onclick = () => {
+      selectedDiff = level;
+      diffContainer.querySelectorAll('button').forEach(b => {
+        b.style.borderColor = btnBorder; b.style.background = btnBg; b.style.color = subTextColor;
+      });
+      // Active Style
+      btn.style.borderColor = '#ffa500';
+      btn.style.background = '#fff3e0';
+      btn.style.color = '#ffa500';
+    };
+    diffContainer.appendChild(btn);
+  });
+  body.appendChild(diffContainer);
+
+  // 2. Questions Count
+  const labelCount = document.createElement('div');
+  labelCount.innerText = "Number of Questions";
+  labelCount.style.cssText = `font-size:13px; font-weight:bold; color:${subTextColor}; margin-bottom:10px;`;
+  body.appendChild(labelCount);
+
+  const countContainer = document.createElement('div');
+  countContainer.style.cssText = "display:flex; gap:10px; margin-bottom:25px;";
+  let selectedCount = 5;
+
+  [5, 10, 15].forEach(num => {
+    const btn = document.createElement('button');
+    btn.innerText = num;
+    const styleDefault = `flex:1; padding:10px; border:1px solid ${num === 5 ? '#ffa500' : btnBorder}; background:${num === 5 ? '#fff3e0' : btnBg}; border-radius:8px; cursor:pointer; font-weight:600; color:${num === 5 ? '#ffa500' : subTextColor};`;
+
+    btn.style.cssText = styleDefault;
+
+    btn.onclick = () => {
+      selectedCount = num;
+      countContainer.querySelectorAll('button').forEach(b => {
+        b.style.borderColor = btnBorder; b.style.background = btnBg; b.style.color = subTextColor;
+      });
+      btn.style.borderColor = '#ffa500';
+      btn.style.background = '#fff3e0';
+      btn.style.color = '#ffa500';
+    };
+    countContainer.appendChild(btn);
+  });
+  body.appendChild(countContainer);
+
+  // Action Button
+  const startBtn = document.createElement('button');
+  startBtn.innerText = "Challenge Me Now 🚀";
+  startBtn.style.cssText = `width:100%; padding:15px; background:#1a1a1a; color:white; border:none; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; transition:transform 0.1s;`;
+  startBtn.onmousedown = () => startBtn.style.transform = "scale(0.98)";
+  startBtn.onmouseup = () => startBtn.style.transform = "scale(1)";
+
+  startBtn.onclick = () => {
+    overlay.remove();
+    initiateRecallChallenge(selectedDiff, selectedCount);
+  };
+
+  body.appendChild(startBtn);
+  box.appendChild(body);
+}
+
+// --- QUIZ & OVERLAY SYSTEM ---
+
+function renderPdfButton() {
+  // Only manual trigger now
+}
+
+// ==========================================
+
+async function initiateRecallChallenge(difficulty = "Moderate", numQuestions = 5) {
+  if (document.getElementById('recall-anchor-overlay')) return;
+
+  // 0. SCRAPE CONTEXT (Before UI blocks view)
+  let context = "";
+  try {
+    const centerElement = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+    if (centerElement) {
+      let target = centerElement;
+      while (target && target.tagName !== 'BODY' && target.innerText.length < 500) {
+        target = target.parentElement;
+      }
+
+      // If we hit BODY, it means we didn't find a specific nearby text block.
+      // We must use scroll-based slicing to get relevant text.
+      if (!target || target.tagName === 'BODY') {
+        const startPoint = Math.max(0, window.scrollY - 800);
+        context = document.body.innerText.substring(startPoint, startPoint + 5000);
+      } else {
+        context = target.innerText;
+      }
+    } else {
+      const startPoint = Math.max(0, window.scrollY - 800);
+      context = document.body.innerText.substring(startPoint, startPoint + 5000);
+    }
+  } catch (e) {
+    context = document.body.innerText.substring(0, 2000);
+  }
+  // Truncate to safe limit
+  context = context.substring(0, 2000);
+
+  // 1. Show Loading State
+  const overlay = createBaseOverlay('recall-anchor-overlay');
+  document.documentElement.appendChild(overlay);
+
+  const isDark = currentTheme === 'dark';
+  const textColor = isDark ? '#e0e0e0' : '#333';
+  const subTextColor = isDark ? '#aaa' : '#888';
+
+  const contentBox = overlay.querySelector('#recall-content-box');
+
+  // Close Button for Loading/Quiz
+  const closeBtn = document.createElement('div');
+  closeBtn.innerHTML = "&times;";
+  closeBtn.style.cssText = `
+    position:absolute; top:10px; right:15px; 
+    font-size:24px; cursor:pointer; color:${subTextColor}; 
+    line-height:1; z-index:10; transition:color 0.2s;
+  `;
+  closeBtn.onmouseover = () => closeBtn.style.color = '#ffa500';
+  closeBtn.onmouseout = () => closeBtn.style.color = subTextColor;
+  closeBtn.onclick = () => overlay.remove();
+
+  // Create wrapper to hold close button + dynamic content
+  const wrapper = document.createElement('div');
+  wrapper.style.height = "100%";
+  wrapper.appendChild(closeBtn); // Always present
+
+  // Inject Spinner Styles
+  const spinnerStyle = document.createElement('style');
+  spinnerStyle.textContent = `
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .recall-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #ffa500;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px auto;
+    }
+  `;
+  overlay.appendChild(spinnerStyle);
+
+  const loadingBody = document.createElement('div');
+  loadingBody.style.padding = "40px";
+  loadingBody.innerHTML = `
+      <div class="recall-spinner"></div>
+      <h3 style="color:${textColor}; margin:0;">Generating Challenge...</h3>
+      <p style="color:${subTextColor}; font-size:12px;">Difficulty: ${difficulty} | Questions: ${numQuestions}</p>
+      <p style="color:#aaa; font-size:11px; margin-top:10px;">Reading context & crafting questions...</p>
+  `;
+  wrapper.appendChild(loadingBody);
+  contentBox.appendChild(wrapper);
+
+  // 2. Context already scraped at step 0
+
+  // 3. Ask AI
+  chrome.runtime.sendMessage({
+    action: "generateQuiz",
+    context: context,
+    difficulty: difficulty,
+    numQuestions: numQuestions
+  }, (response) => {
+    // Check for API errors reported by offscreen or runtime errors
+    if (chrome.runtime.lastError || !response || response.error || !response.quiz || !response.quiz.quizzes) {
+      console.warn("Recall Anchor: AI Generation Failed", chrome.runtime.lastError, response);
+
+      const errorMsg = response?.error || chrome.runtime.lastError?.message || "AI Connection Failed";
+
+      wrapper.innerHTML = ''; // Clear loading
+      wrapper.appendChild(closeBtn); // Re-add close btn
+
+      const errDiv = document.createElement('div');
+      errDiv.style.padding = "30px";
+      errDiv.innerHTML = `
+        <h3 style="color:#d32f2f; margin-top:0;">Connection Error</h3>
+        <p style="color:${subTextColor}; font-size:13px; margin-bottom:20px;">${errorMsg}</p>
+        <button id="closeErrorBtn" style="padding:8px 20px; background:#ddd; color:${textColor}; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Close</button>
+      `;
+      wrapper.appendChild(errDiv);
+
+      document.getElementById('closeErrorBtn').onclick = () => {
+        document.getElementById('recall-anchor-overlay').remove();
+      };
+    } else {
+      // Render Timer & MCQ
+      renderMCQMode(contentBox, response.quiz.quizzes);
+    }
+  });
+}
+
+function createBaseOverlay(id) {
+  const overlay = document.createElement('div');
+  overlay.id = id;
+  overlay.style.cssText = `
+    position:fixed; top:0; left:0; width:100vw; height:100vh; 
+    background:rgba(0,0,0,0.8); z-index:2147483647; 
+    display:flex; justify-content:center; align-items:center; 
+    backdrop-filter:blur(5px); opacity:0; transition:opacity 0.4s ease-in-out;
+  `;
+
+  const isDark = currentTheme === 'dark';
+  const boxBg = isDark ? '#1e1e1e' : '#fff';
+  const boxBorder = isDark ? '#333' : '#eee';
+
+  const box = document.createElement('div');
+  box.id = 'recall-content-box';
+  box.style.cssText = `
+    background:${boxBg}; width:450px; min-height:300px; 
+    border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.3); 
+    text-align:center; font-family:'Segoe UI', sans-serif; 
+    position:relative; border: 1px solid ${boxBorder}; overflow:hidden;
+    transform: translate3d(0, 20px, 0); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  `;
+
+  overlay.appendChild(box);
+
+  // Animation In
+  setTimeout(() => {
+    overlay.style.opacity = '1';
+    box.style.transform = 'translate3d(0,0,0)';
+  }, 50);
+
+  return overlay;
+}
+
+function renderMCQMode(container, quizzes) {
+  let currentQ = 0;
+  const isDark = currentTheme === 'dark';
+
+  // Theme Colors
+  const headerBg = isDark ? '#2c2c2c' : '#fafafa';
+  const headerBorder = isDark ? '#333' : '#eee';
+  const textColor = isDark ? '#e0e0e0' : '#333';
+  const optionBg = isDark ? '#2c2c2c' : 'white';
+  const optionBorder = isDark ? '#444' : '#ddd';
+  const optionTx = isDark ? '#ccc' : '#555';
+
+  const renderQuestion = () => {
+    const q = quizzes[currentQ];
+    container.innerHTML = '';
+
+    // Header
+    const header = document.createElement('div');
+    header.style.cssText = `background:${headerBg}; padding: 15px; border-bottom: 1px solid ${headerBorder}; display: flex; justify-content: space-between; align-items: center; position: relative;`;
+    header.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+         <span style="font-weight:bold; color:#ffa500;">Recall Check</span> 
+         <span style="font-size:12px; color:${optionTx}; opacity:0.7;">${currentQ + 1}/${quizzes.length}</span>
+      </div>
+      <div id="quizCloseBtn" style="cursor:pointer; color:${optionTx}; font-size:20px; font-weight:bold; line-height:0.8; padding:5px;">&times;</div>
+    `;
+
+    // Close logic for MCQ
+    setTimeout(() => {
+      const close = header.querySelector('#quizCloseBtn');
+      if (close) close.onclick = () => container.parentNode.remove(); // container is box, parent is overlay
+    }, 0);
+
+    // Question
+    const body = document.createElement('div');
+    body.style.cssText = "padding:25px;";
+
+    const h3 = document.createElement('h3');
+    h3.innerText = q.question;
+    h3.style.cssText = `font-size: 18px; font-weight: 700; color:${textColor}; margin: 0 0 20px 0; line-height: 1.4;`;
+
+    const optionsDiv = document.createElement('div');
+    optionsDiv.style.cssText = "display:flex; flex-direction:column; gap:10px;";
+
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.innerText = opt;
+      // Improved Dark Mode Contrast
+      const btnBg = isDark ? '#3a3a3a' : 'white'; // Ligher dark gray
+      const btnTx = isDark ? '#ffffff' : '#555'; // Pure white text
+      const btnBorderColor = isDark ? '#555' : '#ddd';
+
+      btn.style.cssText = `
+        padding: 12px;
+        border: 1px solid ${btnBorderColor};
+        border-radius: 8px;
+        background:${btnBg};
+        color:${btnTx};
+        cursor: pointer;
+        text-align: left;
+        font-size: 14px;
+        width: 100%;
+        white-space: normal;
+        word-wrap: break-word;
+        line-height: 1.4;
+        transition:all 0.2s;
+        box-shadow: ${isDark ? '0 2px 4px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.05)'};
+      `;
+
+      btn.onmouseover = () => {
+        btn.style.borderColor = "#ffa500";
+        if (isDark) btn.style.background = "#444";
+      };
+      btn.onmouseout = () => {
+        btn.style.borderColor = btnBorderColor;
+        btn.style.background = btnBg;
+      };
+
+      btn.onclick = () => {
+        // Validation
+        if (idx === q.correctIndex) {
+          btn.style.background = isDark ? '#155724' : "#d4edda";
+          btn.style.borderColor = isDark ? '#28a745' : "#c3e6cb";
+          btn.style.color = isDark ? '#fff' : "#155724";
+          setTimeout(() => {
+            if (currentQ < quizzes.length - 1) {
+              currentQ++;
+              renderQuestion();
+            } else {
+              closeOverlayWithSuccess(container);
+            }
+          }, 800);
+        } else {
+          btn.style.background = isDark ? '#721c24' : "#f8d7da";
+          btn.style.borderColor = isDark ? '#dc3545' : "#f5c6cb";
+          btn.style.color = isDark ? '#fff' : "#721c24";
+          btn.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(0)' }], { duration: 300 });
+        }
+      };
+
+      optionsDiv.appendChild(btn);
+    });
+
+    body.appendChild(h3);
+    body.appendChild(optionsDiv);
+
+    container.appendChild(header);
+    container.appendChild(body);
+  };
+
+  renderQuestion();
+}
+
+
+
+function closeOverlayWithSuccess(container) {
+  container.innerHTML = `
+    <div style="height:300px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+       <div style="font-size:50px;">🏆</div>
+       <h2 style="color:#2ecc71; margin:10px 0;">Legendary!</h2>
+       <p style="color:#888;">Focus restored.</p>
+    </div>
+    `;
+  setTimeout(() => {
+    const overlay = document.getElementById('recall-anchor-overlay');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 400);
+    }
+  }, 1500);
+}
+
+
+// ==========================================
 
 // 6. BUDDY OVERLAY
 function showBuddyOverlay(goal) {
@@ -246,7 +775,6 @@ function showBuddyOverlay(goal) {
 
   const p1 = document.createElement('p');
   p1.style.cssText = "font-size: 18px; color: #e0e0e0; margin-bottom: 10px;";
-  p1.innerHTML = `You said you wanted to focus on <strong>"${goal}"</strong>.`; // Text + Strong is usually ok, but let's be safer:
   p1.innerText = "";
   p1.append("You said you wanted to focus on ");
   const strong = document.createElement('strong'); strong.innerText = `"${goal}"`;
@@ -368,39 +896,56 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   else if (request.action === "showOverlay") {
     showBuddyOverlay(request.goal);
+    sendResponse({ status: "ok" });
   }
   else if (request.action === "showIntervention") {
     activeGoalText = request.goal; isDistractionMode = true; isNudgeActive = true;
-
-    // SPAWN INSTANTLY AS A BOX (No circle hiccup)
     renderFocusBubble(request.goal, true);
     renderOrangeFlash(request.goal);
     expandBubble();
     bodyguard.observe(document.documentElement, { childList: true, subtree: true });
+    sendResponse({ status: "ok" });
   }
   else if (request.action === "clearIntervention") {
     isDistractionMode = false;
     collapseBubble();
     document.getElementById("focus-bridge-glow-top")?.remove();
     document.getElementById("focus-buddy-overlay")?.remove();
+    sendResponse({ status: "ok" });
   }
   else if (request.action === "fireRibbons") {
     fireRibbons(request.type);
+    sendResponse({ status: "ok" });
   }
   else if (request.action === "broadcastClear" || request.action === "broadcastEndSession") {
     isNudgeActive = false;
     isDistractionMode = false;
+    stopRecallMonitoring();
     bodyguard.disconnect();
     document.getElementById("focus-bubble-root")?.remove();
     document.getElementById("focus-bridge-glow-top")?.remove();
     document.getElementById("focus-buddy-overlay")?.remove();
+    document.getElementById("recall-anchor-overlay")?.remove();
+    sendResponse({ status: "ok" });
   }
-  return true;
+  else if (request.action === "updateRecallState") {
+    recallActive = request.active;
+    sendResponse({ status: "ok" });
+  }
+  else if (request.action === "triggerRecallTest") {
+    renderRecallSetupModal();
+    sendResponse({ status: "ok" });
+  }
+  // No return true needed unless we have an actual async operation not covered here
+
 });
 
 // 9. INITIAL LOAD
-chrome.storage.local.get(['sessionActive', 'userGoal'], (res) => {
-  if (isValid() && res.sessionActive) {
+chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive'], (res) => {
+  if (!isValid()) return;
+
+  // FOCUS SESSION (Dependent)
+  if (res.sessionActive) {
     isNudgeActive = true;
     activeGoalText = res.userGoal;
 
@@ -408,9 +953,81 @@ chrome.storage.local.get(['sessionActive', 'userGoal'], (res) => {
     renderFocusBubble(res.userGoal, false);
     bodyguard.observe(document.documentElement, { childList: true, subtree: true });
   }
+
+  // RECALL ANCHOR (Independent of Session)
+  recallActive = !!res.recallActive;
+  // No auto-start monitoring anymore
 });
 
 // 10. THEME SYNC
 chrome.storage.onChanged.addListener((changes) => {
   if (isValid() && changes.theme) updateBubbleTheme(changes.theme.newValue);
+  if (isValid() && changes.recallActive) {
+    recallActive = changes.recallActive.newValue;
+  }
+});
+
+// 11. CONFETTI CELEBRATION
+// 11. CONFETTI CELEBRATION
+function launchConfetti(type = 'finish') {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999999;";
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  const colors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f', '#ffa500'];
+
+  // Adjust count based on type: 'finish' = big burst, 'milestone' = gentle shower
+  const count = type === 'finish' ? 150 : 80;
+
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height, // Start above screen
+      vx: Math.random() * 4 - 2,   // Faster drift
+      vy: Math.random() * 5 + 3,   // Faster fall (3-8px/frame)
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: Math.random() * 8 + 4,
+      wobble: Math.random() * Math.PI * 2
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+    particles.forEach(p => {
+      p.x += p.vx + Math.sin(p.wobble) * 0.5; // Add sway
+      p.y += p.vy;
+      p.wobble += 0.05;
+
+      if (p.y < canvas.height) active = true;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+    });
+
+    if (active) requestAnimationFrame(animate);
+    else canvas.remove();
+  }
+  animate();
+}
+
+// 12. MESSAGE LISTENER EXTENSION
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.action === "fireConfetti") {
+    launchConfetti(msg.type);
+  }
+
+  if (msg.action === "clearIntervention") {
+    // Existing logic might be elsewhere, but let's ensure cleanup here too
+    const flash = document.getElementById("focus-bridge-glow-top");
+    if (flash) flash.remove();
+
+    // Also remove any overlays if present
+    const overlay = document.getElementById("focus-overlay-root");
+    if (overlay) overlay.remove();
+  }
 });

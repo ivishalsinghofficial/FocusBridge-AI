@@ -3,6 +3,8 @@ export async function setupOffscreen() {
     await chrome.offscreen.createDocument({
         url: 'offscreen.html', reasons: ['DOM_SCRAPING'], justification: 'AI analysis for focus.'
     });
+    // Wait for the offscreen script to initialize its listeners
+    await new Promise(resolve => setTimeout(resolve, 500));
 }
 
 export function isRelevantKeywords(goal, title) {

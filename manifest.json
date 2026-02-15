@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FocusBridge AI: Smart Nudge for ADHD & Deep Work",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A privacy-first mindset anchor using local AI to nudge you back to your goals and stop context switching.",
   "permissions": [
     "storage",
@@ -42,7 +42,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net;"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net https://generativelanguage.googleapis.com https://api.openai.com;"
   },
   "minimum_chrome_version": "116"
 }
