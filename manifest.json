@@ -6,7 +6,9 @@
   "permissions": [
     "storage",
     "offscreen",
-    "alarms"
+    "alarms",
+    "clipboardWrite",
+    "topSites"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -23,6 +25,13 @@
       "48": "icon48.png",
       "128": "icon128.png"
     }
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab/newtab.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
   "icons": {
     "16": "icon16.png",
@@ -42,7 +51,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net https://generativelanguage.googleapis.com https://api.openai.com;"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net https://generativelanguage.googleapis.com https://api.openai.com https://thequoteshub.com;"
   },
   "minimum_chrome_version": "116"
 }

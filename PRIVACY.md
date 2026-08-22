@@ -1,51 +1,42 @@
 # Privacy Policy for FocusBridge AI
 
-**Last Updated: December 2025**
+**Last updated: August 22, 2026**
 
-FocusBridge AI is built with a privacy-first philosophy. We believe that your browsing habits are private, and our goal is to help you stay focused without compromising your security.
+FocusBridge AI is a Chrome extension that helps you stay focused. We do not operate a server that receives, stores, sells, or shares your personal data.
 
-## 1. Why we request "Broad Host Permissions" (<all_urls>)
-When you install FocusBridge AI, you will see a notice saying the extension can "read and change data on all websites." 
+## Information stored on your device
 
-**We require this for one specific reason:**
-To provide the **"Smart Nudge"** feature. Because you might use any website for your work (from specialized research portals to common tools), the extension needs to be able to verify if your *current* tab matches your *current* goal. 
+FocusBridge AI stores settings, goals, task lists, productivity history, and website rules in `chrome.storage.local` on your device. Captures you choose to save are stored in your browser's local extension database. This data is used to provide the extension's features and is not sent to FocusBridge AI's developer.
 
-Without this permission, the AI would be "blind" and could not nudge you when you wander onto a distracting site.
+The extension can analyze the current page to provide focus nudges and Recall Anchor challenges. It requests access to all sites because these features need to work on the site you are currently viewing. It does not upload a browsing-history log to our servers.
 
-## 2. On-Device AI (Zero Data Collection)
-Unlike many other AI tools, FocusBridge AI does **not** send your data to the cloud.
-- **Local Analysis:** 100% of the analysis is performed on your own computer using Transformers.js. 
-- **No External APIs:** We do not use OpenAI, Google Gemini, or any other cloud-based AI. 
-- **Offline First:** Your goals, sub-tasks, and browsing context never leave your machine.
+## Optional AI features and API keys
 
-## 3. Data Storage
-- **Local Storage:** Your focus history, goals, and rules are stored strictly in your browser's local storage.
-- **No Tracking:** We do not use any analytics, tracking pixels, or third-party monitoring scripts.
+Recall Anchor is optional. If you enable it and provide your own Gemini or OpenAI API key, FocusBridge AI stores that key in `chrome.storage.local` in your Chrome profile. It is not sent to the FocusBridge AI developer or through a FocusBridge AI server.
 
-## 4. Third-Party Sharing
-We do not sell, trade, or share your information. Period.
+When you request a Recall Anchor quiz, the extension sends up to 2,000 characters of text extracted from the active page, along with the quiz prompt, directly to the provider you selected:
 
-## 5. Open Source Transparency
-As an open-source project, our code is fully auditable. You can verify exactly how we handle your data by visiting our [GitHub Repository](https://github.com/ivishalsinghofficial/FocusBridge-AI).
+- Google Gemini: `generativelanguage.googleapis.com`
+- OpenAI: `api.openai.com`
 
-Since you’ve added the **BYOK (Bring Your Own Key)** feature for Gemini and ChatGPT, your `PRIVACY.md` needs to clearly explain that while some data now travels to Google or OpenAI, it is **completely under the user's control** and never touches your servers.
+Those providers process the request under their own terms and privacy policies. Do not use Recall Anchor on pages containing information you do not want to disclose to your selected AI provider. Use restricted, revocable API keys and set provider-side spending limits where available.
 
-Here is the professional text to add to your `PRIVACY.md`. I’ve organized it into a "What stays local" vs "What goes to AI" format, which builds massive trust.
+## Other network requests
 
-***
+The local AI feature may download model files from Hugging Face and supporting WebAssembly files from jsDelivr. The extension may also retrieve focus quotes from The Quotes Hub. These requests are made directly from your browser to those services.
 
-## 6. Remote AI Features (Recall Anchor)
-Version 1.0.1 introduces an optional **Recall Anchor** feature. This allows you to use high-fidelity Multiple Choice Questions (MCQs) to verify your focus.
+## Screenshots and clipboard
 
-### Bring Your Own Key (BYOK) Model
-- **Local Key Storage:** If you choose to use Gemini Pro or ChatGPT, your API keys are stored strictly within your browser's secure local storage (`chrome.storage.local`). The developer of FocusBridge AI has **zero access** to these keys.
-- **Direct Communication:** When a quiz is generated, the extension sends a text snippet from your active tab directly to the official Google (Gemini) or OpenAI (ChatGPT) endpoints. No intermediary servers are used.
-- **Data Usage:** These snippets are used only for a one-time prompt generation. We recommend reviewing the privacy policies of [Google AI Studio](https://ai.google.dev/support/privacy) and [OpenAI](https://openai.com/policies/privacy-policy) regarding their API data usage.
+Screenshot and clipboard features run only in response to your action. A screenshot copied to the clipboard is not sent to an external service. Captures you choose to save are stored locally in your browser profile until you delete them.
 
-## 7. What Never Leaves Your Machine
-*   **Your Goals & Sub-tasks:** These are private and stored only on your device.
-*   **Your Browsing History:** FocusBridge AI analyzes context in real-time but does not maintain a permanent log of your web history on any server.
-*   **Analytics:** We do not use third-party tracking (like Google Analytics). Your productivity stats (The "Productivity Wheel") are calculated and stored locally.
+## Data sharing and retention
 
-## 8. Support & Queries
-Mail me at ivishalsinghofficial@gmail.com
+FocusBridge AI does not use advertising trackers or analytics. We do not sell or share your data. Local data remains in your browser profile until you delete it, remove it through Chrome, or uninstall the extension. Data sent through an optional AI feature is subject to the selected provider's retention and privacy practices.
+
+## Security
+
+Browser local storage is not a dedicated hardware-backed secret vault. Keep your browser profile secure and revoke a key promptly if you suspect it was exposed. You can remove your saved API key in the extension at any time.
+
+## Contact
+
+For privacy questions, contact ivishalsinghofficial@gmail.com.

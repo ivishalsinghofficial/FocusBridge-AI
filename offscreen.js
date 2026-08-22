@@ -11,6 +11,15 @@ env.backends.onnx.wasm.simd = false;
 
 let extractor;
 
+function dataUrlToBlob(dataUrl) {
+    const match = /^data:([^;,]+);base64,(.+)$/.exec(dataUrl);
+    if (!match) throw new Error('Invalid screenshot image data.');
+    const binary = atob(match[2]);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: match[1] });
+}
+
 async function init() {
     if (extractor) return;
     try {
@@ -38,13 +47,22 @@ function cosineSimilarity(vecA, vecB) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // 1. STRICT FILTER: Only handle messages meant for offscreen
-    if (message.target !== 'offscreen' && message.target !== 'offscreen-recall' && message.target !== 'offscreen-api') {
+    if (message.target !== 'offscreen' && message.target !== 'offscreen-recall' && message.target !== 'offscreen-api' && message.target !== 'offscreen-clipboard') {
         return false; // Explicitly decline handling
     }
 
     // 2. Dispatch Async Handler
     (async () => {
         try {
+            if (message.target === 'offscreen-clipboard') {
+                const blob = dataUrlToBlob(message.dataUrl);
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
+                sendResponse({ success: true });
+                return;
+            }
+
             if (message.target === 'offscreen-api') {
                 const { subAction, provider, key, context } = message;
 
@@ -94,9 +112,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 });
             }
         } catch (err) {
-            console.error("AI: Fatal Offscreen Error", err);
-            if (message.target === 'offscreen-api') {
-                sendResponse({ error: err.message });
+            console.error("AI: Fatal Offscreen Error", err?.name, err?.message, err);
+            if (message.target === 'offscreen-api' || message.target === 'offscreen-clipboard') {
+                sendResponse({ success: false, error: err?.message || err?.name || 'Clipboard write failed.' });
             } else if (message.target === 'offscreen-recall') {
                 chrome.runtime.sendMessage({
                     target: 'background-recall',

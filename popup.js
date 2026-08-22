@@ -10,6 +10,7 @@ import { loadAIReflection, initAICoach } from './modules/ai-coach.js';
 
 // --- 1. INITIALIZATION & NAVIGATION ---
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settingsButton')?.addEventListener('click', () => chrome.runtime.openOptionsPage());
   // A. Load Initial Data
   displayDailyStory();
   initPomodoro();

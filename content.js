@@ -19,6 +19,226 @@ function isValid() {
   return typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
 }
 
+function renderGlobalToolsDock() {
+  if (!isValid() || document.getElementById('focusbridge-global-tools-root')) return;
+  const host = document.createElement('div');
+  host.id = 'focusbridge-global-tools-root';
+  host.style.cssText = 'all:initial;position:fixed;z-index:2147483647;top:0;left:0;';
+  const shadow = host.attachShadow({ mode: 'closed' });
+  shadow.innerHTML = [
+    '<style>',
+    '*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}',
+    '#rail{position:fixed;right:-12px;top:50%;transform:translateY(-50%);display:grid;gap:9px}.tool-bubble{appearance:none;display:grid;place-items:center;width:46px;height:42px;border:1px solid rgba(255,255,255,.22);border-radius:999px 0 0 999px;background:rgba(16,17,20,.86);color:#e8c56e;padding:0 12px 0 5px;cursor:pointer;box-shadow:0 12px 28px rgba(0,0,0,.25);font-size:16px;font-weight:700;transition:transform .18s ease,background .2s ease}.tool-bubble svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.tool-bubble:hover{transform:translateX(-4px);background:rgba(43,39,31,.96)}',
+    '#panel{position:fixed;right:14px;top:50%;width:280px;transform:translate(110%,-50%);padding:16px;color:#f6f3ec;background:rgba(17,18,21,.94);border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:-18px 16px 42px rgba(0,0,0,.34);backdrop-filter:blur(18px);transition:transform .24s cubic-bezier(.2,.8,.2,1)}#panel.open{transform:translate(-68px,-50%)}',
+    '.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}#close{appearance:none;border:0;background:transparent;color:#f6f3ec;cursor:pointer;font-size:21px;line-height:1;padding:0 2px}',
+    '#display{width:100%;height:44px;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:rgba(0,0,0,.22);color:#fff;padding:0 12px;margin-bottom:9px;text-align:right;font-size:19px;outline:none}.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}',
+    '.key,.action{appearance:none;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.07);color:#f8f5ee;min-height:36px;cursor:pointer;font-size:14px}.key:hover,.action:hover{background:rgba(210,178,102,.18);border-color:rgba(223,196,128,.38)}.key.operator{color:#e8c56e}.key.equals{background:#d7b45a;color:#17140c;font-weight:800}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px}.action{min-height:40px;font-size:12px;font-weight:650}#status{min-height:16px;margin:10px 1px 0;color:#cfc8bb;font-size:11px;text-align:center}@media(max-width:430px){#panel{width:260px}.tool-bubble{padding:9px}.tool-bubble span:last-child{display:none}}',
+    '</style><section id="panel" aria-label="FocusBridge tools" aria-hidden="true"><div class="head"><span>Focus tools</span><button id="close" type="button" aria-label="Close tools">×</button></div><input id="display" aria-label="Calculator display" value="0" readonly><div class="keys" aria-label="Calculator">',
+    '<button class="key operator" data-key="C">C</button><button class="key operator" data-key="(">(</button><button class="key operator" data-key=")">)</button><button class="key operator" data-key="/">÷</button><button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button><button class="key operator" data-key="*">×</button><button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button><button class="key operator" data-key="-">−</button><button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button><button class="key operator" data-key="+">+</button><button class="key" data-key="0">0</button><button class="key" data-key=".">.</button><button class="key" data-key="back">⌫</button><button class="key equals" data-key="=">=</button>',
+    '</div><div id="status" role="status" aria-live="polite"></div></section><div id="rail" aria-label="FocusBridge quick tools"><button id="screenshot" class="tool-bubble" type="button" title="Capture area" aria-label="Capture area"><svg viewBox="0 0 24 24"><path d="M4 8V5h3M16 5h3v3M20 16v3h-3M8 20H5v-3"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg></button><button id="history" class="tool-bubble" type="button" title="Recent captures" aria-label="Recent captures"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg></button></div>'
+  ].join('');
+  const panel = shadow.querySelector('#panel');
+  const calculatorLaunch = shadow.querySelector('#calculator-launch');
+  const display = shadow.querySelector('#display');
+  const status = shadow.querySelector('#status');
+  const setOpen = (open) => {
+    panel.classList.toggle('open', open);
+    panel.setAttribute('aria-hidden', String(!open));
+    calculatorLaunch?.setAttribute('aria-expanded', String(open));
+  };
+  calculatorLaunch?.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
+  shadow.querySelector('#close').addEventListener('click', () => setOpen(false));
+  shadow.querySelectorAll('[data-key]').forEach((button) => button.addEventListener('click', () => {
+    const key = button.dataset.key;
+    let value = display.value === '0' ? '' : display.value;
+    if (key === 'C') value = '';
+    else if (key === 'back') value = value.slice(0, -1);
+    else if (key === '=') {
+      try {
+        if (!/^[0-9+\-*/().\s]+$/.test(value)) throw new Error('Invalid expression');
+        const result = Function('"use strict"; return (' + value + ')')();
+        value = Number.isFinite(result) ? String(result) : '';
+      } catch { value = ''; status.textContent = 'Check the calculation.'; }
+    } else value += key;
+    display.value = value || '0';
+  }));
+  shadow.querySelector('#history').addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'listCaptures' }, ({ captures: focusbridgeCaptureHistory = [] } = {}) => {
+      console.debug(`FocusBridge IndexedDB captures (${focusbridgeCaptureHistory.length}):`, focusbridgeCaptureHistory);
+      // Override the dock's normal slide-out offset: this compact history
+      // panel should sit immediately beside the right-side tool rail.
+      // The rail occupies the final ~50px of the viewport. Keep the gallery
+      // just to its left rather than letting either surface overlap the other.
+      panel.style.cssText = 'right:54px;top:50%;width:224px;min-width:0;max-height:70vh;overflow:hidden;padding:14px;box-sizing:border-box;transform:translate(0,-50%);';
+      panel.innerHTML = '<style>#history-list{display:flex;flex-direction:column;align-items:center;gap:12px;max-height:60vh;overflow-y:auto;overflow-x:hidden;padding:2px 6px 2px 0;scrollbar-gutter:stable}#history-list::-webkit-scrollbar{width:6px}#history-list::-webkit-scrollbar-track{background:#111216;border-radius:8px}#history-list::-webkit-scrollbar-thumb{background:rgba(201,169,88,.42);border-radius:8px}#history-list::-webkit-scrollbar-thumb:hover{background:rgba(226,194,109,.66)}.capture-card{position:relative;flex:none;width:168px;max-width:100%;border:1px solid rgba(227,205,142,.12);border-radius:12px;overflow:hidden;background:#08090b;box-shadow:0 7px 18px rgba(0,0,0,.32)}.capture-card img{display:block;width:100%!important;height:114px;object-fit:cover;cursor:pointer}.capture-actions{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(rgba(2,2,3,.2),rgba(2,2,3,.78));opacity:0;transition:opacity .15s}.capture-card:hover .capture-actions{opacity:1}.capture-actions button{display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid rgba(227,205,142,.3);border-radius:9px;background:rgba(10,11,14,.86);color:#eee6d3;cursor:pointer}.capture-actions button:hover,.fb-history-close:hover{border-color:rgba(220,185,92,.7);background:rgba(220,185,92,.16);color:#f1d58c}.capture-actions svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}</style><div class="head"><span style="color:#eee6d3">Recent captures</span><button id="history-close" class="fb-history-close" type="button" aria-label="Close history"></button></div><div id="history-list"></div>';
+      const list = panel.querySelector('#history-list');
+      if (!focusbridgeCaptureHistory.length) list.textContent = 'No saved captures yet.';
+      focusbridgeCaptureHistory.forEach(item => {
+        const card = document.createElement('article'); card.className = 'capture-card';
+        const image = document.createElement('img'); image.src = item.imageDataUrl; image.draggable = true; image.style.cssText = 'display:block;width:100%;aspect-ratio:1.35;object-fit:cover;cursor:grab;'; card.append(image);
+        const actions = document.createElement('div'); actions.className = 'capture-actions';
+        const zoom = document.createElement('button'), copy = document.createElement('button'), download = document.createElement('button'); zoom.innerHTML = captureIcon('zoom'); copy.innerHTML = captureIcon('copy'); download.innerHTML = captureIcon('download'); actions.append(zoom, copy, download); card.append(actions);
+        const preview = () => { const modal=document.createElement('div'); modal.style.cssText='position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:8vh 8vw;background:rgba(0,0,0,.72);backdrop-filter:blur(7px)'; const box=document.createElement('div');box.style.cssText='position:relative;max-width:80vw;animation:fb-gallery-preview .18s ease both'; const full=document.createElement('img');full.src=item.imageDataUrl;full.style.cssText='display:block;max-width:80vw;max-height:80vh;border-radius:12px'; const tools=document.createElement('div');tools.style.cssText='display:flex;justify-content:center;gap:8px;margin-top:10px'; const modalCopy=document.createElement('button'),modalDownload=document.createElement('button'),remove=document.createElement('button'),close=document.createElement('button'); [modalCopy,modalDownload,remove,close].forEach(button=>button.style.cssText='display:grid;place-items:center;width:38px;height:38px;border:1px solid rgba(255,255,255,.24);border-radius:9px;background:rgba(17,18,21,.85);color:#fff;cursor:pointer');modalCopy.innerHTML=captureIcon('copy');modalDownload.innerHTML=captureIcon('download');remove.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg>';close.innerHTML=captureIcon('x');tools.append(modalCopy,modalDownload,remove,close);modalCopy.onclick=()=>copyImageDirectly(item.imageDataUrl).catch(()=>{});modalDownload.onclick=()=>{const link=document.createElement('a');link.href=item.imageDataUrl;link.download='focusbridge-capture.jpg';link.click();};remove.onclick=()=>chrome.runtime.sendMessage({action:'deleteCapture',id:item.id},()=>{card.remove();modal.remove();});close.onclick=()=>modal.remove();box.append(full,tools);modal.append(box);modal.onclick=e=>{if(e.target===modal)modal.remove();};shadow.append(modal); }; zoom.onclick=event=>{event.stopPropagation();preview();}; copy.onclick=event=>{event.stopPropagation();copyImageDirectly(item.imageDataUrl).catch(()=>{});}; download.onclick=event=>{event.stopPropagation();const link=document.createElement('a');link.href=item.imageDataUrl;link.download='focusbridge-capture.jpg';link.click();};
+        list.append(card);
+      });
+      const closeHistory = () => { panel.style.cssText = ''; setOpen(false); document.removeEventListener('pointerdown', outsideHistory, true); };
+      const outsideHistory = event => { if (event.target !== host) closeHistory(); };
+      const historyClose = panel.querySelector('#history-close'); historyClose.innerHTML = captureIcon('x'); historyClose.style.cssText = 'display:grid;place-items:center;width:28px;height:28px;padding:0;border:1px solid rgba(227,205,142,.22);border-radius:8px;background:transparent;color:#eee6d3;cursor:pointer;'; historyClose.querySelector('svg').setAttribute('width', '16'); historyClose.querySelector('svg').setAttribute('height', '16'); historyClose.addEventListener('click', closeHistory);
+      setOpen(true);
+      // Delay prevents the click that opened the gallery from closing it.
+      setTimeout(() => document.addEventListener('pointerdown', outsideHistory, true), 0);
+    });
+  });
+  // IndexedDB writes happen in the extension service worker. Refresh an open
+  // gallery only after that write is confirmed, rather than rendering a stale
+  // in-memory list.
+  chrome.runtime.onMessage.addListener(message => {
+    if (message.action === 'captureSaved' && panel.classList.contains('open') && panel.querySelector('#history-list')) {
+      shadow.querySelector('#history').click();
+    }
+  });
+  const captureLayer = document.createElement('div');
+  captureLayer.style.cssText = 'display:none;position:fixed;inset:0;z-index:2147483647;color:#fff;';
+  // Lucide icon SVG source (https://lucide.dev/icons/, MIT License).
+  const captureIconPaths = {
+    copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/>',
+    back: '<path d="m12 19-7-7 7-7M5 12h14"/>',
+    zoom: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M11 8v6M8 11h6"/>'
+  };
+  const captureIcon = name => `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${captureIconPaths[name]}</svg>`;
+  captureLayer.innerHTML = '<div id="shade" style="position:fixed;inset:0;background:rgba(0,0,0,.62);cursor:crosshair"></div><div id="selection" style="display:none;position:fixed;border:2px solid #e8c56e;box-shadow:0 0 0 9999px rgba(0,0,0,.42);cursor:move"><div id="handle" style="position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;background:#e8c56e;border:2px solid #17140c;border-radius:50%;cursor:nwse-resize"></div></div><div id="pickerBar" style="display:none;position:fixed;left:50%;bottom:28px;transform:translateX(-50%);gap:8px;padding:8px;border:1px solid rgba(255,255,255,.22);border-radius:12px;background:rgba(17,18,21,.94);box-shadow:0 12px 34px rgba(0,0,0,.35)"><button id="pickerCancel" title="Cancel" aria-label="Cancel" type="button">&#215;</button><button id="cropEdit" title="Annotate selected area" aria-label="Annotate selected area" type="button">&#9998;</button></div><div id="editor" style="display:none;position:fixed;inset:0;background:rgba(10,11,13,.97);padding:22px;text-align:center"><div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:12px"><button id="backToCrop" title="Back to selection" aria-label="Back to selection" type="button">&#8592;</button><button id="pen" title="Pen" aria-label="Pen" type="button">&#9998;</button><input id="penColor" type="color" value="#e8c56e" aria-label="Pen color"><button id="copyCrop" title="Copy to clipboard" aria-label="Copy to clipboard" type="button">&#10697;</button><button id="downloadCrop" title="Download PNG" aria-label="Download PNG" type="button">&#8681;</button><button id="closeEditor" title="Done" aria-label="Done" type="button">&#215;</button></div><canvas id="captureCanvas" style="max-width:92vw;max-height:82vh;cursor:crosshair;box-shadow:0 12px 45px rgba(0,0,0,.5)"></canvas><div id="captureStatus" style="margin-top:9px;font-size:12px;color:#d5cfbf"></div></div>';
+  const captureStyle = document.createElement('style');
+  captureStyle.textContent = '#pickerBar,#editor>div:first-child{border:1px solid rgba(255,255,255,.22)!important;border-radius:14px;background:rgba(17,18,21,.88)!important;backdrop-filter:blur(16px);box-shadow:0 12px 34px rgba(0,0,0,.35)}#pickerBar button,#editor button{appearance:none;display:grid;place-items:center;width:38px;height:38px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,255,255,.09);color:#fff;padding:0;cursor:pointer}#pickerBar button svg,#editor button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}#penColor{width:38px;height:38px;padding:4px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,255,255,.09);cursor:pointer}#pickerBar button:hover,#editor button:hover{background:rgba(255,255,255,.16)}';
+  shadow.append(captureStyle, captureLayer);
+  const selection = captureLayer.querySelector('#selection');
+  const editor = captureLayer.querySelector('#editor');
+  const pickerBar = captureLayer.querySelector('#pickerBar');
+  const canvas = captureLayer.querySelector('#captureCanvas');
+  const captureStatus = captureLayer.querySelector('#captureStatus');
+  const quickDownload = document.createElement('button');
+  quickDownload.id = 'quick-download'; quickDownload.type = 'button'; quickDownload.innerHTML = '&#8681;'; quickDownload.title = 'Download selected area'; quickDownload.setAttribute('aria-label', 'Download selected area');
+  const quickCopy = document.createElement('button');
+  quickCopy.id = 'quick-copy'; quickCopy.type = 'button'; quickCopy.innerHTML = '&#10697;'; quickCopy.title = 'Copy selected area'; quickCopy.setAttribute('aria-label', 'Copy selected area');
+  pickerBar.append(quickDownload, quickCopy);
+  [['#pickerCancel', 'x'], ['#cropEdit', 'pen'], ['#quickDownload', 'download'], ['#quickCopy', 'copy'], ['#backToCrop', 'back'], ['#pen', 'pen'], ['#copyCrop', 'copy'], ['#downloadCrop', 'download'], ['#closeEditor', 'x']].forEach(([selector, icon]) => {
+    const button = captureLayer.querySelector(selector) || (selector === '#quickDownload' ? quickDownload : selector === '#quickCopy' ? quickCopy : null);
+    if (button) button.innerHTML = captureIcon(icon);
+  });
+  const copyImageDirectly = async (dataUrl) => {
+    const match = /^data:([^;,]+);base64,(.+)$/.exec(dataUrl);
+    if (!match) throw new Error('Invalid image data.');
+    const binary = atob(match[2]), bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+    const blob = new Blob([bytes], { type: match[1] });
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+    } catch (directError) {
+      await new Promise((resolve, reject) => chrome.runtime.sendMessage({ action: 'copyImageToClipboard', dataUrl }, response => {
+        if (chrome.runtime.lastError || !response?.success) reject(new Error(response?.error || chrome.runtime.lastError?.message || directError.message));
+        else resolve();
+      }));
+    }
+  };
+  const saveCaptureToGallery = (dataUrl, format) => new Promise((resolve, reject) => chrome.runtime.sendMessage({ action: 'saveCapture', dataUrl, format }, response => response?.success ? resolve() : reject(new Error(response?.error || 'Could not save capture'))));
+  const completeCapture = async (dataUrl, format, action) => { await action(); await saveCaptureToGallery(dataUrl, format); };
+  let sourceImage, rect = {}, pointerMode = null, pointerStart, drawing = false, penEnabled = false, isCreatingSelection = false;
+  const setSelection = () => Object.assign(selection.style, { left: rect.x + 'px', top: rect.y + 'px', width: rect.width + 'px', height: rect.height + 'px' });
+  const closeCapture = () => { captureLayer.style.display = 'none'; editor.style.display = 'none'; pickerBar.style.display = 'none'; selection.style.display = 'none'; captureStatus.textContent = ''; captureLayer.remove(); };
+  const pointerMove = (event) => {
+    if (!pointerMode) return;
+    const dx = event.clientX - pointerStart.x, dy = event.clientY - pointerStart.y;
+    if (pointerMode === 'move') { rect.x = Math.max(0, Math.min(window.innerWidth - rect.width, pointerStart.rectX + dx)); rect.y = Math.max(0, Math.min(window.innerHeight - rect.height, pointerStart.rectY + dy)); }
+    else { rect.width = Math.max(80, Math.min(window.innerWidth - rect.x, pointerStart.rectW + dx)); rect.height = Math.max(80, Math.min(window.innerHeight - rect.y, pointerStart.rectH + dy)); }
+    setSelection();
+  };
+  selection.addEventListener('pointerdown', (event) => {
+    pointerMode = event.target.id === 'handle' ? 'resize' : 'move';
+    pointerStart = { x:event.clientX, y:event.clientY, rectX:rect.x, rectY:rect.y, rectW:rect.width, rectH:rect.height };
+    selection.setPointerCapture(event.pointerId);
+  });
+  selection.addEventListener('pointermove', pointerMove);
+  selection.addEventListener('pointerup', () => { pointerMode = null; });
+  captureLayer.querySelector('#pickerCancel').addEventListener('click', closeCapture);
+  const shade = captureLayer.querySelector('#shade');
+  shade.addEventListener('pointerdown', (event) => {
+    isCreatingSelection = true;
+    rect = { x:event.clientX, y:event.clientY, width:0, height:0 };
+    selection.style.display = 'block';
+    pickerBar.style.display = 'none';
+    shade.setPointerCapture(event.pointerId);
+  });
+  shade.addEventListener('pointermove', (event) => {
+    if (!isCreatingSelection) return;
+    rect.x = Math.min(pointerStart?.x ?? event.clientX, event.clientX);
+    rect.y = Math.min(pointerStart?.y ?? event.clientY, event.clientY);
+    const startX = pointerStart?.x ?? event.clientX, startY = pointerStart?.y ?? event.clientY;
+    rect.width = Math.abs(event.clientX - startX);
+    rect.height = Math.abs(event.clientY - startY);
+    setSelection();
+  });
+  shade.addEventListener('pointerup', () => {
+    isCreatingSelection = false;
+    if (rect.width > 18 && rect.height > 18) pickerBar.style.display = 'flex';
+  });
+  const selectedImageData = () => {
+    const selected = document.createElement('canvas');
+    const scaleX = sourceImage.naturalWidth / window.innerWidth, scaleY = sourceImage.naturalHeight / window.innerHeight;
+    selected.width = Math.round(rect.width * scaleX); selected.height = Math.round(rect.height * scaleY);
+    selected.getContext('2d').drawImage(sourceImage, rect.x * scaleX, rect.y * scaleY, selected.width, selected.height, 0, 0, selected.width, selected.height);
+    return selected.toDataURL('image/png');
+  };
+  quickCopy.addEventListener('click', () => {
+    const dataUrl = selectedImageData();
+    copyImageDirectly(dataUrl).then(() => { closeCapture(); saveCaptureToGallery(dataUrl, 'jpeg').catch(error => console.warn('FocusBridge capture save failed:', error)); }).catch(error => { captureStatus.textContent = `Copy failed: ${error.name || 'Error'} — ${error.message || 'Browser blocked clipboard access.'}`; });
+  });
+  quickDownload.addEventListener('click', () => {
+    const dataUrl = selectedImageData(); const link = document.createElement('a'); link.href = dataUrl; link.download = 'focusbridge-capture.png'; link.click(); closeCapture(); saveCaptureToGallery(dataUrl, 'jpeg').catch(error => console.warn('FocusBridge capture save failed:', error));
+  });
+  shade.addEventListener('pointerdown', (event) => { pointerStart = { x:event.clientX, y:event.clientY }; }, true);
+  captureLayer.querySelector('#cropEdit').addEventListener('click', () => {
+    const scaleX = sourceImage.naturalWidth / window.innerWidth, scaleY = sourceImage.naturalHeight / window.innerHeight;
+    canvas.width = Math.round(rect.width * scaleX); canvas.height = Math.round(rect.height * scaleY);
+    canvas.getContext('2d').drawImage(sourceImage, rect.x * scaleX, rect.y * scaleY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+    pickerBar.style.display = 'none'; selection.style.display = 'none'; editor.style.display = 'block'; captureStatus.textContent = 'Use Pen to mark the image, then copy or download.';
+  });
+  captureLayer.querySelector('#backToCrop').addEventListener('click', () => { editor.style.display = 'none'; pickerBar.style.display = 'flex'; selection.style.display = 'block'; });
+  captureLayer.querySelector('#closeEditor').addEventListener('click', closeCapture);
+  captureLayer.querySelector('#pen').addEventListener('click', (event) => { penEnabled = !penEnabled; event.currentTarget.style.background = penEnabled ? '#d7b45a' : ''; event.currentTarget.style.color = penEnabled ? '#17140c' : ''; });
+  const canvasPoint = (event) => { const bounds = canvas.getBoundingClientRect(); return { x:(event.clientX - bounds.left) * canvas.width / bounds.width, y:(event.clientY - bounds.top) * canvas.height / bounds.height }; };
+  canvas.addEventListener('pointerdown', (event) => { if (!penEnabled) return; drawing = true; const point = canvasPoint(event), context = canvas.getContext('2d'); context.beginPath(); context.moveTo(point.x, point.y); canvas.setPointerCapture(event.pointerId); });
+  canvas.addEventListener('pointermove', (event) => { if (!drawing) return; const point = canvasPoint(event), context = canvas.getContext('2d'); context.lineWidth = Math.max(3, canvas.width / 350); context.lineCap = 'round'; context.strokeStyle = captureLayer.querySelector('#penColor').value; context.lineTo(point.x, point.y); context.stroke(); });
+  canvas.addEventListener('pointerup', () => { drawing = false; });
+  captureLayer.querySelector('#copyCrop').addEventListener('click', () => {
+    captureStatus.textContent = 'Copying…';
+    const dataUrl = canvas.toDataURL('image/png');
+    completeCapture(dataUrl, 'png', () => copyImageDirectly(dataUrl)).then(closeCapture).catch(error => { captureStatus.textContent = `Copy failed: ${error.name || 'Error'} — ${error.message || 'Browser blocked clipboard access.'}`; });
+  });
+  captureLayer.querySelector('#downloadCrop').addEventListener('click', () => { const dataUrl = canvas.toDataURL('image/png'); completeCapture(dataUrl, 'png', () => { const link = document.createElement('a'); link.href = dataUrl; link.download = 'focusbridge-capture.png'; link.click(); }).then(closeCapture).catch(error => { captureStatus.textContent = `Save failed: ${error.message}`; }); });
+  shadow.querySelector('#screenshot').addEventListener('click', () => {
+    if (!captureLayer.isConnected) shadow.append(captureLayer);
+    status.textContent = 'Preparing area capture…';
+    host.style.visibility = 'hidden';
+    requestAnimationFrame(() => setTimeout(() => {
+      chrome.runtime.sendMessage({ action: 'captureVisibleScreenshot' }, (response) => {
+        host.style.visibility = '';
+        if (chrome.runtime.lastError || !response?.success || !response.dataUrl) {
+          status.textContent = response?.error || 'Could not capture the page.';
+          return;
+        }
+        sourceImage = new Image();
+        sourceImage.onload = () => {
+          rect = {}; selection.style.display = 'none'; pickerBar.style.display = 'none'; captureLayer.style.display = 'block'; status.textContent = '';
+        };
+        sourceImage.src = response.dataUrl;
+      });
+    }, 80));
+  });
+  (document.documentElement || document.body).appendChild(host);
+}
+
 // 1. SELF-HEALING BODYGUARD
 const bodyguard = new MutationObserver(() => {
   if (!isValid()) {
@@ -562,14 +782,21 @@ async function initiateRecallChallenge(difficulty = "Moderate", numQuestions = 5
 
       const errDiv = document.createElement('div');
       errDiv.style.padding = "30px";
-      errDiv.innerHTML = `
-        <h3 style="color:#d32f2f; margin-top:0;">Connection Error</h3>
-        <p style="color:${subTextColor}; font-size:13px; margin-bottom:20px;">${errorMsg}</p>
-        <button id="closeErrorBtn" style="padding:8px 20px; background:#ddd; color:${textColor}; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Close</button>
-      `;
+      const errorTitle = document.createElement('h3');
+      errorTitle.textContent = 'Connection Error';
+      errorTitle.style.cssText = 'color:#d32f2f; margin-top:0;';
+      const errorText = document.createElement('p');
+      errorText.textContent = errorMsg;
+      errorText.style.cssText = `color:${subTextColor}; font-size:13px; margin-bottom:20px;`;
+      const closeErrorBtn = document.createElement('button');
+      closeErrorBtn.id = 'closeErrorBtn';
+      closeErrorBtn.type = 'button';
+      closeErrorBtn.textContent = 'Close';
+      closeErrorBtn.style.cssText = `padding:8px 20px; background:#ddd; color:${textColor}; border:none; border-radius:6px; cursor:pointer; font-weight:bold;`;
+      errDiv.append(errorTitle, errorText, closeErrorBtn);
       wrapper.appendChild(errDiv);
 
-      document.getElementById('closeErrorBtn').onclick = () => {
+      closeErrorBtn.onclick = () => {
         document.getElementById('recall-anchor-overlay').remove();
       };
     } else {
@@ -941,8 +1168,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // 9. INITIAL LOAD
-chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive'], (res) => {
+chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive', 'toolsDockEnabled'], (res) => {
   if (!isValid()) return;
+  if (res.toolsDockEnabled !== false) renderGlobalToolsDock();
 
   // FOCUS SESSION (Dependent)
   if (res.sessionActive) {
@@ -1030,4 +1258,11 @@ chrome.runtime.onMessage.addListener((msg) => {
     const overlay = document.getElementById("focus-overlay-root");
     if (overlay) overlay.remove();
   }
+});
+
+chrome.storage.onChanged.addListener(changes => {
+  if (!changes.toolsDockEnabled) return;
+  const dock = document.getElementById('focusbridge-global-tools-root');
+  if (changes.toolsDockEnabled.newValue === false) dock?.remove();
+  else if (!dock && isValid()) renderGlobalToolsDock();
 });

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FocusBridge AI Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="settings">
+    <p class="eyebrow">FOCUSBRIDGE AI</p>
+    <h1>FocusBridge Settings</h1>
+    <section class="setting-row">
+      <div><h2>FocusBridge Homepage</h2><p>Show your focused New Tab experience. Turn it off to open Google instead.</p></div>
+      <label class="switch"><input id="homepage-toggle" type="checkbox" aria-label="Enable FocusBridge Homepage"><span></span></label>
+    </section>
+    <section class="setting-row">
+      <div><h2>Quick Tools</h2><p>Screenshot, calculator &amp; capture gallery on web pages</p></div>
+      <label class="switch"><input id="tools-toggle" type="checkbox" aria-label="Enable Quick Tools"><span></span></label>
+    </section>
+    <section class="name-setting"><label for="name-input">Name <span>(optional)</span></label><input id="name-input" maxlength="60" placeholder="Used in your greeting"></section>
+    <p id="saved" role="status"></p>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

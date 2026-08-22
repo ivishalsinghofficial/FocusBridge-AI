@@ -65,6 +65,7 @@
       font-weight: 800;
       text-transform: uppercase;
     }
+    .settings-button{display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);cursor:pointer}.settings-button:hover{border-color:var(--primary);color:var(--primary)}.settings-button svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
     .content-area {
       flex-grow: 1;
@@ -486,10 +487,10 @@
     </div>
     <!-- THE TOGGLE SWITCH -->
 
-    <label class="theme-switch" style="position: relative; display: inline-block; width: 30px; height: 16px;">
+    <div style="display:flex;align-items:center;gap:9px"><button id="settingsButton" class="settings-button" type="button" aria-label="Open FocusBridge settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56V20h-3v-.08A1.7 1.7 0 0 0 10.66 18a1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 14.34a1.7 1.7 0 0 0-1.56-1.04H5v-3h.08A1.7 1.7 0 0 0 7 9.26a1.7 1.7 0 0 0-.34-1.88L6.6 7.32 8.72 5.2l.06.06A1.7 1.7 0 0 0 10.66 5a1.7 1.7 0 0 0 1.04-1.56V3h3v.08A1.7 1.7 0 0 0 15.74 5a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19.4 8.66a1.7 1.7 0 0 0 1.56 1.04H21v3h-.08A1.7 1.7 0 0 0 19.4 15Z"/></svg></button><label class="theme-switch" style="position: relative; display: inline-block; width: 30px; height: 16px;">
       <input type="checkbox" id="themeToggle" style="opacity: 0; width: 0; height: 0;">
       <span class="slider"></span>
-    </label>
+    </label></div>
 
 
     <!--<label class="theme-switch" style="position: relative; display: inline-block; width: 30px; height: 16px;">
