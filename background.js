@@ -204,11 +204,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.target === 'background') {
     lastScore = message.score;
-    if (lastScore < SEMANTIC_TRIAGE_THRESHOLD) {
-      chrome.tabs.sendMessage(message.tabId, { action: "showIntervention", goal: message.goal }).catch(() => { });
-    } else {
-      chrome.tabs.sendMessage(message.tabId, { action: "clearIntervention" }).catch(() => { });
-    }
+    // Semantic analysis can finish after the user has ended a session. Do not
+    // revive a nudge from that stale result; explicitly clear the tab instead.
+    chrome.storage.local.get(['sessionActive', 'userGoal'], (state) => {
+      if (!state.sessionActive || state.userGoal !== message.goal) {
+        chrome.tabs.sendMessage(message.tabId, { action: "clearIntervention" }).catch(() => { });
+        return;
+      }
+      if (lastScore < SEMANTIC_TRIAGE_THRESHOLD) {
+        chrome.tabs.sendMessage(message.tabId, { action: "showIntervention", goal: message.goal }).catch(() => { });
+      } else {
+        chrome.tabs.sendMessage(message.tabId, { action: "clearIntervention" }).catch(() => { });
+      }
+    });
     return false;
   }
 

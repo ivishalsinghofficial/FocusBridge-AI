@@ -681,8 +681,11 @@ function renderFocusBubble(goal, isDistracted = false) {
   endFocusBtn.style.cssText = "cursor:pointer;margin-left:6px;width:26px;height:26px;padding:0;flex-shrink:0;border:1px solid rgba(255,93,93,0.88);border-radius:50%;background:rgba(255,58,58,0.20);color:#ff5c5c;box-shadow:0 0 10px rgba(255,55,55,0.24),inset 0 1px 0 rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;";
   endFocusBtn.onclick = (e) => {
     e.stopPropagation();
+    // Clear this tab first. Other open tabs independently receive the same
+    // state change below, so a delayed background broadcast cannot leave a
+    // nudge presentation behind.
     clearNudgePresentation();
-    chrome.storage.local.remove(['userGoal', 'sessionActive', 'subTasks', 'pomoActive'], () => {
+    chrome.storage.local.remove(['userGoal', 'sessionActive', 'subTasks', 'pomoActive', 'pomoEndTime', 'workDuration', 'currentStartTime', 'milestonesReached'], () => {
       chrome.alarms.clearAll();
       chrome.runtime.sendMessage({ action: "broadcastEndSession" });
     });
@@ -1538,6 +1541,12 @@ chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive', 'toolsDoc
 
 // 10. THEME SYNC
 chrome.storage.onChanged.addListener((changes) => {
+  // Ending a session removes sessionActive rather than setting it to false.
+  // Every injected page observes that change so a distraction tab clears its
+  // owl, orange cue, and expanded state even if it misses a runtime message.
+  if (changes.sessionActive && changes.sessionActive.newValue !== true) {
+    clearNudgePresentation();
+  }
   if (isValid() && changes.theme) updateBubbleTheme(changes.theme.newValue);
   if (changes.nudgeBuddyEnabled) nudgeBuddyEnabled = !!changes.nudgeBuddyEnabled.newValue;
   if (changes.boostStickersEnabled) boostStickersEnabled = changes.boostStickersEnabled.newValue !== false;
