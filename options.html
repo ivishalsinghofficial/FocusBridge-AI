@@ -10,6 +10,7 @@
   <main class="settings">
     <p class="eyebrow">FOCUSBRIDGE AI</p>
     <h1>FocusBridge Settings</h1>
+    <section class="name-setting"><label for="name-input">Name <span>(optional)</span></label><input id="name-input" maxlength="60" placeholder="Used in your greeting"></section>
     <section class="setting-row">
       <div><h2>FocusBridge Homepage</h2><p>Show your focused New Tab experience. Turn it off to open Google instead.</p></div>
       <label class="switch"><input id="homepage-toggle" type="checkbox" aria-label="Enable FocusBridge Homepage"><span></span></label>
@@ -18,7 +19,14 @@
       <div><h2>Quick Tools</h2><p>Screenshot, calculator &amp; capture gallery on web pages</p></div>
       <label class="switch"><input id="tools-toggle" type="checkbox" aria-label="Enable Quick Tools"><span></span></label>
     </section>
-    <section class="name-setting"><label for="name-input">Name <span>(optional)</span></label><input id="name-input" maxlength="60" placeholder="Used in your greeting"></section>
+    <section class="setting-row">
+      <div><h2>Nudge Buddy</h2><p>Show a friendly owl with a short encouragement when a focus nudge appears.</p></div>
+      <label class="switch"><input id="nudge-effect-toggle" type="checkbox" aria-label="Enable Nudge Buddy"><span></span></label>
+    </section>
+    <section class="setting-row">
+      <div><h2>Focus boost stickers</h2><p>Show animated milestone words at 30%, 60%, 90%, and timer completion.</p></div>
+      <label class="switch"><input id="boost-stickers-toggle" type="checkbox" aria-label="Enable focus boost stickers"><span></span></label>
+    </section>
     <p id="saved" role="status"></p>
   </main>
   <script src="options.js"></script>

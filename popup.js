@@ -45,16 +45,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // D. Theme Toggle
   const themeToggle = document.getElementById('themeToggle');
+  const syncThemeToggleLabel = (isDark) => themeToggle.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
   chrome.storage.local.get(['theme'], (res) => {
     if (res.theme === 'dark') {
       document.body.classList.add('dark-mode');
       themeToggle.checked = true;
     }
+    syncThemeToggleLabel(themeToggle.checked);
   });
 
   themeToggle.addEventListener('change', () => {
     const isDark = themeToggle.checked;
     document.body.classList.toggle('dark-mode', isDark);
+    syncThemeToggleLabel(isDark);
     chrome.storage.local.set({ theme: isDark ? 'dark' : 'light' });
     // Reload charts if needed
     loadAllStats();

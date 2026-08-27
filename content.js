@@ -6,6 +6,10 @@ let activeGoalText = "";
 let isDistractionMode = false;
 let isNudgeActive = false;
 let currentTheme = 'light';
+let nudgeBuddyEnabled = false;
+let focusUserName = '';
+let nudgeBuddyMessagePool = {};
+let boostStickersEnabled = true;
 
 // RECALL ANCHOR VARIABLES
 let recallActive = false;
@@ -257,6 +261,22 @@ const bodyguard = new MutationObserver(() => {
 });
 
 // 2. THEME MANAGEMENT
+function setBubbleCardSurface(bubble, visible) {
+  if (!bubble) return;
+  const isDark = currentTheme === 'dark';
+  bubble.style.background = visible
+    ? (isDark ? "rgba(12, 21, 33, 0.94)" : "rgba(255, 255, 255, 0.94)")
+    : "transparent";
+  bubble.style.borderColor = visible
+    ? (isDark ? "rgba(214, 227, 245, 0.30)" : "rgba(35, 52, 73, 0.22)")
+    : "transparent";
+  bubble.style.boxShadow = visible
+    ? (isDark
+      ? "0 14px 34px rgba(2, 8, 18, 0.42), inset 0 1px 0 rgba(255,255,255,0.12)"
+      : "0 14px 30px rgba(35, 51, 70, 0.20), inset 0 1px 0 rgba(255,255,255,0.86)")
+    : "none";
+}
+
 const updateBubbleTheme = (theme) => {
   if (!isValid()) return;
   currentTheme = theme;
@@ -264,23 +284,37 @@ const updateBubbleTheme = (theme) => {
   if (!bubble) return;
 
   const isDark = theme === 'dark';
-  bubble.style.background = isDark ? "#1a1a1a" : "#ffffff";
-  bubble.style.borderColor = isDark ? "#333" : "#e0e0e0";
-  bubble.style.boxShadow = isDark ? "0 8px 30px rgba(0,0,0,0.5)" : "0 8px 25px rgba(0,0,0,0.15)";
+  setBubbleCardSurface(bubble, bubble.dataset.expanded === "true" || isDistractionMode);
 
   const goalText = document.getElementById("bubbleGoalText");
   if (goalText) goalText.style.color = isDark ? "#fff" : "#000";
 
-  const mins = document.getElementById("pomoMins");
-  if (mins) mins.style.color = isDark ? "#eee" : "#333";
+  const timerDetail = document.getElementById("bubbleTimerDetail");
+  if (timerDetail) timerDetail.style.color = isDark ? "#ffc35a" : "#a45c00";
 
-  const circleBg = bubble.querySelector('circle[stroke-width="3"]:first-child');
-  if (circleBg) circleBg.setAttribute("stroke", isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)");
+  const mins = document.getElementById("pomoMins");
+  if (mins) mins.style.color = isDark ? "#f4f7fb" : "#172033";
+
+  const pomo = document.getElementById("pomoContainer");
+  if (pomo) {
+    pomo.style.background = isDark ? "rgba(18, 32, 48, 0.94)" : "rgba(248, 250, 253, 0.96)";
+    pomo.style.borderColor = isDark ? "rgba(214, 227, 245, 0.24)" : "rgba(35, 52, 73, 0.18)";
+    pomo.style.boxShadow = isDark
+      ? "0 8px 20px rgba(1, 7, 16, 0.34), inset 0 1px 0 rgba(255,255,255,0.10)"
+      : "0 8px 18px rgba(35, 51, 70, 0.16), inset 0 1px 0 rgba(255,255,255,0.86)";
+  }
+
+  const circleBg = document.getElementById('bubbleRingTrack');
+  if (circleBg) circleBg.setAttribute("stroke", isDark ? "rgba(255,255,255,0.13)" : "rgba(31,41,55,0.10)");
+
+  const circleFlow = document.getElementById('bubbleRingFlow');
+  if (circleFlow) circleFlow.setAttribute("stroke", isDark ? "rgba(255, 216, 145, 0.62)" : "rgba(226, 136, 0, 0.52)");
 
   const quizBtn = document.getElementById("focus-quiz-btn");
   if (quizBtn) {
-    quizBtn.style.background = isDark ? '#333' : '#f5f5f5';
-    quizBtn.style.color = isDark ? '#aaa' : '#666';
+    quizBtn.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.52)';
+    quizBtn.style.color = isDark ? '#d6e2f2' : '#41536b';
+    quizBtn.style.borderColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(47,65,85,0.14)';
   }
 };
 
@@ -289,19 +323,159 @@ function renderOrangeFlash(goal) {
   if (!isValid() || document.getElementById("focus-bridge-glow-top")) return;
   const glow = document.createElement("div");
   glow.id = "focus-bridge-glow-top";
-  glow.style.cssText = `position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:120px!important;pointer-events:none!important;z-index:2147483646!important;background:linear-gradient(to bottom, rgba(255, 165, 0, 0.7) 0%, rgba(255, 165, 0, 0) 100%)!important;will-change:opacity;animation:breatheTop 3s infinite ease-in-out!important;`;
+  glow.setAttribute("aria-hidden", "true");
+  glow.style.cssText = `position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:96px!important;pointer-events:none!important;z-index:2147483646!important;background:linear-gradient(to bottom, rgba(255,177,54,0.50) 0%, rgba(255,143,0,0.27) 58%, rgba(255,143,0,0) 100%)!important;box-shadow:inset 0 3px 0 rgba(255,232,180,0.92)!important;will-change:opacity,transform;animation:nudgeAttentionGlow 4.2s infinite cubic-bezier(.45,0,.25,1)!important;`;
 
   if (!document.getElementById("focus-bridge-anim")) {
     const style = document.createElement("style");
     style.id = "focus-bridge-anim";
-    style.textContent = `@keyframes breatheTop { 0% {opacity:0.2;} 50% {opacity:0.8;} 100% {opacity:0.2;} }`;
+    style.textContent = `@keyframes nudgeAttentionGlow { 0%,100% { opacity:.48; transform:translateY(-10px) scaleY(.94); } 46% { opacity:1; transform:translateY(0) scaleY(1); } 62% { opacity:.82; transform:translateY(-2px) scaleY(.985); } } @keyframes nudgeBuddyFlyIn { from { transform:translateX(-115vw) rotate(-12deg); } 72% { transform:translateX(8px) rotate(3deg); } to { transform:translateX(0) rotate(0); } } @keyframes nudgeBuddyFloat { 0%,100% { translate:0 0; } 50% { translate:0 -4px; } }`;
     document.documentElement.appendChild(style);
   }
   document.documentElement.appendChild(glow);
+  if (nudgeBuddyEnabled) renderNudgeBuddy();
+}
+
+function renderNudgeBuddy() {
+  if (document.getElementById("focus-bridge-nudge-buddy")) return;
+  const name = focusUserName || "friend";
+  const messages = ["{name}, one useful minute is enough to restart.","{name}, come back to the task in front of you.","{name}, your future self will thank you for this focus.","{name}, you are closer than this distraction suggests.","{name}, finish the next small step.","{name}, make this minute intentional.","{name}, consistency matters more than the mood.","{name}, this tab can wait. Get back to your goal.","{name}, you started for a reason—honor it.","{name}, eyes back on the task.","{name}, a short reset is still progress.","{name}, keep the promise you made yourself.","{name}, make the next minute count.","{name}, focus is a skill you are training.","{name}, stay here—the momentum is building.","{name}, do the tiny next step now.","{name}, you do not need motivation to continue.","{name}, protect this block of time.","{name}, let the timer carry you forward.","{name}, you can handle one more minute.","{name}, less switching, more finishing.","{name}, this is how deep work begins.","{name}, put attention where it matters.","{name}, returning is the hard part—well done.","{name}, your goal deserves this moment.","{name}, choose progress over distraction.","{name}, finish the current thought first.","{name}, you are building trust with yourself.","{name}, calm focus—then the next step.","{name}, give this task your full minute.","{name}, the finish line is getting closer.","{name}, keep going. You have this.","{name}, is this tab helping your goal right now?","{name}, can this wait until the timer ends?","{name}, what is the next action that moves work forward?","{name}, would tomorrow-you choose this distraction?","{name}, is this the work you intended to do?","{name}, can you give your goal just one more focused minute?"];
+  const buddy = document.createElement("div");
+  buddy.id = "focus-bridge-nudge-buddy";
+  buddy.setAttribute("aria-hidden", "true");
+  buddy.style.cssText = "position:fixed;right:18px;bottom:106px;z-index:2147483647;width:58px;height:58px;pointer-events:none;animation:nudgeBuddyFlyIn .9s cubic-bezier(.2,.9,.25,1) both;";
+  const message = document.createElement("div");
+  message.style.cssText = "position:absolute;right:20px;bottom:44px;width:max-content;max-width:210px;padding:9px 11px;border:1px solid rgba(255,211,128,.42);border-radius:14px 14px 4px 14px;background:rgba(14,24,38,.97);box-shadow:0 10px 26px rgba(1,8,18,.38);color:#fff5dc;font:600 12px/1.35 'Segoe UI',sans-serif;";
+  message.innerText = name + ", checking your timer…";
+  chrome.storage.local.get(['pomoActive', 'pomoEndTime', 'workDuration'], (timer) => {
+    const total = (timer.workDuration || 25) * 60000;
+    const remaining = Math.max(0, (timer.pomoEndTime || Date.now() + total) - Date.now());
+    const progress = timer.pomoActive ? 1 - (remaining / total) : 0;
+    const isFinishLanguage = /finish|closer|final|almost|nearly/i;
+    const phase = progress < 0.25 ? 'early' : progress < 0.75 ? 'middle' : 'late';
+    const phaseMessages = phase === 'early'
+      ? messages.filter(item => !isFinishLanguage.test(item))
+      : phase === 'late'
+        ? messages.filter(item => isFinishLanguage.test(item) || /one more|keep going|timer ends/i.test(item))
+        : messages.filter(item => !/finish line|almost there|nearly yours/i.test(item));
+    if (!nudgeBuddyMessagePool[phase]?.length) nudgeBuddyMessagePool[phase] = [...phaseMessages].sort(() => Math.random() - 0.5);
+    message.innerText = nudgeBuddyMessagePool[phase].pop().replace('{name}', name);
+  });
+  const tail = document.createElement("div");
+  tail.style.cssText = "position:absolute;right:25px;bottom:37px;width:13px;height:13px;background:rgba(14,24,38,.97);border-right:1px solid rgba(255,211,128,.42);border-bottom:1px solid rgba(255,211,128,.42);transform:rotate(45deg);";
+  const owl = document.createElement("div");
+  owl.style.cssText = "position:relative;z-index:1;width:58px;height:58px;display:grid;place-items:center;animation:nudgeBuddyFloat 2.5s ease-in-out 1s infinite;";
+  owl.innerHTML = '<svg viewBox="0 0 64 64" width="58" height="58"><path d="M15 25 10 13l13 6 9-7 9 7 13-6-5 12c4 5 5 10 4 17-2 11-11 17-25 17S7 53 8 42c-1-7 0-12 7-17Z" fill="#344764" stroke="#a8bbd4" stroke-width="2"/><path d="M17 40c2 12 28 16 31 0-5 4-26 4-31 0Z" fill="#263852"/><circle cx="22" cy="34" r="9" fill="#f4b83f"/><circle cx="42" cy="34" r="9" fill="#f4b83f"/><circle cx="22" cy="34" r="4" fill="#132238"/><circle cx="42" cy="34" r="4" fill="#132238"/><path d="m32 37-4 6h8l-4-6Z" fill="#f2a629"/><path d="M21 52c4 3 18 3 22 0" fill="none" stroke="#a8bbd4" stroke-width="2" stroke-linecap="round"/></svg>';
+  buddy.append(message, tail, owl);
+  document.documentElement.appendChild(buddy);
 }
 
 // 4. RENDER THE FLUID BUBBLE
 // 4. RENDER THE FLUID BUBBLE
+function renderNudgeWidget(goal) {
+  if (document.getElementById("focus-bubble-root")) return;
+
+  const isDark = currentTheme === 'dark';
+  const bubble = document.createElement("div");
+  bubble.id = "focus-bubble-root";
+  bubble.dataset.variant = "nudge";
+  bubble.dataset.expanded = "true";
+  if (!document.getElementById('focus-bubble-ring-animation')) {
+    const animationStyle = document.createElement('style');
+    animationStyle.id = 'focus-bubble-ring-animation';
+    animationStyle.textContent = '@keyframes focusBubbleRingFlow { to { stroke-dashoffset: -28; } }';
+    document.documentElement.appendChild(animationStyle);
+  }
+  Object.assign(bubble.style, {
+    position: "fixed", right: "20px", bottom: "24px",
+    width: "280px", height: "76px", zIndex: "2147483647",
+    boxSizing: "border-box", display: "grid",
+    gridTemplateColumns: "68px minmax(0, 1fr) 38px", columnGap: "10px",
+    alignItems: "center", padding: "4px 12px 4px 6px",
+    borderRadius: "20px", userSelect: "none",
+    border: `1px solid ${isDark ? "rgba(214, 227, 245, 0.30)" : "rgba(35, 52, 73, 0.22)"}`,
+    background: isDark ? "rgba(12, 21, 33, 0.96)" : "rgba(255, 255, 255, 0.96)",
+    boxShadow: isDark
+      ? "0 14px 34px rgba(2, 8, 18, 0.42), inset 0 1px 0 rgba(255,255,255,0.12)"
+      : "0 14px 30px rgba(35, 51, 70, 0.20), inset 0 1px 0 rgba(255,255,255,0.86)",
+    backdropFilter: "blur(16px) saturate(135%)",
+    WebkitBackdropFilter: "blur(16px) saturate(135%)"
+  });
+
+  const copy = document.createElement("div");
+  copy.style.cssText = "min-width:0;display:flex;flex-direction:column;justify-content:center;";
+
+  const pomoContainer = document.createElement("div");
+  pomoContainer.id = "pomoContainer";
+  pomoContainer.style.cssText = `position:relative;width:68px;height:68px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid ${isDark ? "rgba(214, 227, 245, 0.24)" : "rgba(35, 52, 73, 0.18)"};background:${isDark ? "rgba(18, 32, 48, 0.94)" : "rgba(248, 250, 253, 0.96)"};box-shadow:${isDark ? "0 8px 20px rgba(1, 7, 16, 0.34), inset 0 1px 0 rgba(255,255,255,0.10)" : "0 8px 18px rgba(35, 51, 70, 0.16), inset 0 1px 0 rgba(255,255,255,0.86)"};`;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "68");
+  svg.setAttribute("height", "68");
+  svg.style.cssText = "position:absolute;pointer-events:none;";
+  const track = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  track.id = "bubbleRingTrack";
+  track.setAttribute("d", "M34 5 A29 29 0 0 0 34 63");
+  track.setAttribute("stroke", isDark ? "rgba(255,255,255,0.13)" : "rgba(31,41,55,0.10)");
+  track.setAttribute("stroke-width", "3");
+  track.setAttribute("fill", "none");
+  const ring = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  ring.id = "bubbleRing";
+  ring.setAttribute("d", "M34 5 A29 29 0 0 0 34 63");
+  ring.setAttribute("stroke", "#ffb12d");
+  ring.setAttribute("stroke-width", "3.5");
+  ring.setAttribute("fill", "none");
+  ring.setAttribute("stroke-dasharray", "91");
+  ring.setAttribute("stroke-dashoffset", "91");
+  ring.setAttribute("stroke-linecap", "round");
+  ring.style.cssText = "transition:stroke-dashoffset 0.65s cubic-bezier(0.25, 1, 0.5, 1);filter:drop-shadow(0 0 3px rgba(255,177,45,0.45));";
+  const flow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  flow.id = "bubbleRingFlow";
+  flow.setAttribute("d", "M34 5 A29 29 0 0 0 34 63");
+  flow.setAttribute("stroke", isDark ? "rgba(255, 216, 145, 0.62)" : "rgba(226, 136, 0, 0.52)");
+  flow.setAttribute("stroke-width", "1.35");
+  flow.setAttribute("stroke-dasharray", "1.4 5.2");
+  flow.setAttribute("fill", "none");
+  flow.setAttribute("stroke-linecap", "round");
+  flow.style.animation = "focusBubbleRingFlow 1.35s linear infinite";
+  svg.append(track, ring, flow);
+  const mins = document.createElement("span");
+  mins.id = "pomoMins";
+  mins.innerText = "--";
+  mins.style.cssText = `font-size:14px;font-weight:750;font-family:'Segoe UI',sans-serif;letter-spacing:-0.02em;color:${isDark ? '#f4f7fb' : '#172033'};`;
+  pomoContainer.append(svg, mins);
+
+  const timerDetail = document.createElement("div");
+  timerDetail.id = "bubbleTimerDetail";
+  timerDetail.innerText = "--:-- LEFT";
+  timerDetail.style.cssText = `font-size:11px;font-weight:750;color:${isDark ? '#ffc35a' : '#a45c00'};letter-spacing:0.06em;margin-bottom:3px;`;
+
+  const intent = document.createElement("div");
+  intent.innerText = "FOCUS INTENT";
+  intent.style.cssText = `font-size:8px;font-weight:750;color:${isDark ? 'rgba(221,232,246,0.58)' : 'rgba(31,41,55,0.52)'};letter-spacing:0.11em;margin-bottom:3px;`;
+
+  const goalText = document.createElement("div");
+  goalText.id = "bubbleGoalText";
+  goalText.innerText = goal.length > 15 ? goal.substring(0, 15) + "..." : goal;
+  goalText.title = goal;
+  goalText.style.cssText = `overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:${isDark ? '#f4f7fb' : '#172033'};font-size:14px;font-weight:700;line-height:1.2;`;
+  copy.append(timerDetail, intent, goalText);
+
+  const quizBtn = document.createElement("button");
+  quizBtn.id = "focus-quiz-btn";
+  quizBtn.type = "button";
+  quizBtn.title = "Take a Quiz";
+  quizBtn.setAttribute("aria-label", "Take a Quiz");
+  quizBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>';
+  quizBtn.style.cssText = `width:38px;height:38px;padding:0;display:grid;place-items:center;cursor:pointer;border-radius:50%;border:1px solid ${isDark ? 'rgba(255,255,255,0.16)' : 'rgba(47,65,85,0.16)'};background:${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.52)'};color:${isDark ? '#d6e2f2' : '#41536b'};`;
+  quizBtn.onclick = (event) => {
+    event.stopPropagation();
+    renderRecallSetupModal();
+  };
+
+  bubble.append(pomoContainer, copy, quizBtn);
+  document.documentElement.appendChild(bubble);
+}
+
 function renderFocusBubble(goal, isDistracted = false) {
   if (document.getElementById("focus-bubble-root")) return;
   activeGoalText = goal;
@@ -311,61 +485,85 @@ function renderFocusBubble(goal, isDistracted = false) {
   const isDark = currentTheme === 'dark';
 
   // Decide initial shape based on distraction state
-  const initialWidth = isDistracted ? "auto" : "60px";
-  const initialRadius = isDistracted ? "12px" : "30px";
-
-  // Base Variables
-  const bg = isDark ? "#1a1a1a" : "#ffffff";
-  const border = isDark ? "#333" : "#e0e0e0";
-  const shadow = isDark ? "0 8px 30px rgba(0,0,0,0.5)" : "0 8px 25px rgba(0,0,0,0.15)";
+  const initialWidth = "68px";
+  const initialRadius = "50%";
 
   Object.assign(bubble.style, {
-    position: "fixed", bottom: "30px", right: "30px",
-    width: initialWidth, height: "60px",
-    minWidth: isDistracted ? "140px" : "60px",
+    position: "fixed", bottom: "30px", right: "-34px", left: "auto",
+    width: initialWidth, height: "68px",
+    minWidth: "68px",
     maxWidth: "400px", // Constrain max width
     zIndex: "2147483647", cursor: "grab", borderRadius: initialRadius,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    boxShadow: shadow, userSelect: "none", overflow: "hidden",
-    border: `1px solid ${border}`, background: bg,
-    transition: "width 0.3s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s, box-shadow 0.3s"
+    display: "flex", alignItems: "center", justifyContent: "flex-start",
+    boxShadow: "none", userSelect: "none", overflow: "hidden",
+    border: "1px solid transparent", background: "transparent",
+    backdropFilter: "blur(16px) saturate(135%)", WebkitBackdropFilter: "blur(16px) saturate(135%)",
+    transition: "width 0.28s cubic-bezier(0.25, 1, 0.5, 1), left 0.28s cubic-bezier(0.25, 1, 0.5, 1), right 0.28s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.28s, background 0.3s, box-shadow 0.3s"
   });
+  bubble.dataset.snappedSide = "right";
+  bubble.dataset.expanded = isDistracted ? "true" : "false";
+
+  if (!document.getElementById('focus-bubble-ring-animation')) {
+    const animationStyle = document.createElement('style');
+    animationStyle.id = 'focus-bubble-ring-animation';
+    animationStyle.textContent = '@keyframes focusBubbleRingFlow { to { stroke-dashoffset: -28; } }';
+    document.documentElement.appendChild(animationStyle);
+  }
 
   // Create Pomo Container (State 1)
   constomoContainer = document.createElement('div');
   const pomoContainer = document.createElement('div');
   pomoContainer.id = "pomoContainer";
   Object.assign(pomoContainer.style, {
-    position: "relative", width: "60px", height: "60px", flexShrink: "0",
-    display: isDistracted ? 'none' : 'flex', alignItems: "center", justifyContent: "center"
+    position: "relative", width: "68px", height: "68px", flexShrink: "0",
+    display: 'flex', alignItems: "center", justifyContent: "center",
+    borderRadius: "50%",
+    border: `1px solid ${isDark ? "rgba(214, 227, 245, 0.24)" : "rgba(35, 52, 73, 0.18)"}`,
+    background: isDark ? "rgba(18, 32, 48, 0.94)" : "rgba(248, 250, 253, 0.96)",
+    boxShadow: isDark
+      ? "0 8px 20px rgba(1, 7, 16, 0.34), inset 0 1px 0 rgba(255,255,255,0.10)"
+      : "0 8px 18px rgba(35, 51, 70, 0.16), inset 0 1px 0 rgba(255,255,255,0.86)"
   });
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", "60");
-  svg.setAttribute("height", "60");
-  svg.style.cssText = "position:absolute; transform: rotate(-90deg); pointer-events: none;";
+  svg.setAttribute("width", "68");
+  svg.setAttribute("height", "68");
+  svg.style.cssText = "position:absolute; pointer-events: none;";
 
-  const circleBg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-  circleBg.setAttribute("cx", "30"); circleBg.setAttribute("cy", "30"); circleBg.setAttribute("r", "26");
-  circleBg.setAttribute("stroke", isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)");
+  const circleBg = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  circleBg.id = "bubbleRingTrack";
+  circleBg.setAttribute("d", "M34 5 A29 29 0 0 0 34 63");
+  circleBg.setAttribute("stroke", isDark ? "rgba(255,255,255,0.13)" : "rgba(31,41,55,0.10)");
   circleBg.setAttribute("stroke-width", "3");
   circleBg.setAttribute("fill", "none");
 
-  const circleRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  const circleRing = document.createElementNS("http://www.w3.org/2000/svg", "path");
   circleRing.id = "bubbleRing";
-  circleRing.setAttribute("cx", "30"); circleRing.setAttribute("cy", "30"); circleRing.setAttribute("r", "26");
-  circleRing.setAttribute("stroke", "#2ecc71"); circleRing.setAttribute("stroke-width", "3");
+  circleRing.setAttribute("d", "M34 5 A29 29 0 0 0 34 63");
+  circleRing.setAttribute("stroke", "#ffb12d"); circleRing.setAttribute("stroke-width", "3.5");
   circleRing.setAttribute("fill", "none");
-  circleRing.setAttribute("stroke-dasharray", "164"); circleRing.setAttribute("stroke-dashoffset", "164");
+  circleRing.setAttribute("stroke-dasharray", "91"); circleRing.setAttribute("stroke-dashoffset", "91");
   circleRing.setAttribute("stroke-linecap", "round");
-  circleRing.style.transition = "stroke-dashoffset 1s linear";
+  circleRing.style.transition = "stroke-dashoffset 0.65s cubic-bezier(0.25, 1, 0.5, 1)";
+  circleRing.style.filter = "drop-shadow(0 0 3px rgba(255,177,45,0.45))";
+
+  const circleFlow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  circleFlow.id = "bubbleRingFlow";
+  circleFlow.setAttribute("d", "M34 5 A29 29 0 0 0 34 63");
+  circleFlow.setAttribute("stroke", isDark ? "rgba(255, 216, 145, 0.62)" : "rgba(226, 136, 0, 0.52)");
+  circleFlow.setAttribute("stroke-width", "1.35");
+  circleFlow.setAttribute("stroke-dasharray", "1.4 5.2");
+  circleFlow.setAttribute("fill", "none");
+  circleFlow.setAttribute("stroke-linecap", "round");
+  circleFlow.style.animation = "focusBubbleRingFlow 1.35s linear infinite";
 
   svg.appendChild(circleBg);
   svg.appendChild(circleRing);
+  svg.appendChild(circleFlow);
 
   const minsSpan = document.createElement('span');
   minsSpan.id = "pomoMins";
-  minsSpan.style.cssText = `font-size: 14px; font-weight: 700; font-family: 'Inter', sans-serif; color:${isDark ? '#eee' : '#333'};`;
+  minsSpan.style.cssText = `font-size: 14px; font-weight: 750; font-family: 'Segoe UI', sans-serif; letter-spacing:-0.02em; color:${isDark ? '#f4f7fb' : '#172033'}; transform:${isDistracted ? 'translateX(0)' : 'translateX(-10px)'}; transition:transform .28s cubic-bezier(.25,1,.5,1);`;
   minsSpan.innerText = "--";
 
   pomoContainer.appendChild(svg);
@@ -376,20 +574,31 @@ function renderFocusBubble(goal, isDistracted = false) {
   bubbleContent.id = "bubbleContent";
   Object.assign(bubbleContent.style, {
     display: isDistracted ? 'flex' : 'none',
+    position: 'relative',
+    inset: "auto",
     alignItems: 'center',
+    justifyContent: 'flex-start',
     padding: "0 10px 0 0",
     height: "100%",
+    width: "auto",
+    boxSizing: "border-box",
     maxWidth: "100%",
-    overflow: "hidden"
+    overflow: "hidden",
+    flex: "0 1 auto"
   });
 
   // Text Container
   const textContainer = document.createElement('div');
-  textContainer.style.cssText = "display:flex; flex-direction:column; justify-content:center; padding:0 12px; overflow:hidden;";
+  textContainer.style.cssText = "display:flex;flex:0 1 auto;min-width:0;flex-direction:column;justify-content:center;padding:0 10px 0 12px;overflow:hidden;";
 
   const targetLabel = document.createElement('div');
-  targetLabel.innerText = "FOCUS GOAL";
-  targetLabel.style.cssText = `font-size:9px; font-weight:700; color:#aaa; letter-spacing:0.5px; margin-bottom:2px;`;
+  targetLabel.innerText = "FOCUS INTENT";
+  targetLabel.style.cssText = `font-size:8px; font-weight:750; color:${isDark ? 'rgba(221,232,246,0.58)' : 'rgba(31,41,55,0.52)'}; letter-spacing:0.11em; margin-bottom:3px;`;
+
+  const timerDetail = document.createElement('div');
+  timerDetail.id = "bubbleTimerDetail";
+  timerDetail.innerText = "--:-- LEFT";
+  timerDetail.style.cssText = `font-size:10px; font-weight:750; color:${isDark ? '#ffc35a' : '#a45c00'}; letter-spacing:0.07em; margin-bottom:4px;`;
 
   const goalTextEl = document.createElement('div');
   goalTextEl.id = "bubbleGoalText";
@@ -399,14 +608,15 @@ function renderFocusBubble(goal, isDistracted = false) {
   goalTextEl.title = goal; // Tooltip for full text
 
   goalTextEl.style.cssText = `
-    color: ${isDark ? '#fff' : '#000'}; 
-    font-weight: 600; 
+    color: ${isDark ? '#f4f7fb' : '#172033'};
+    font-weight: 650;
     font-size: 13px; 
     line-height: 1.3;
     overflow: hidden;
     white-space: nowrap;
   `;
 
+  textContainer.appendChild(timerDetail);
   textContainer.appendChild(targetLabel);
   textContainer.appendChild(goalTextEl);
 
@@ -437,22 +647,23 @@ function renderFocusBubble(goal, isDistracted = false) {
   quizBtn.style.cssText = `
     cursor:pointer; 
     margin-left:8px; 
-    width:36px; height:36px; flex-shrink:0;
-    border-radius:10px; 
-    background:${isDark ? '#333' : '#f5f5f5'}; 
-    color:${isDark ? '#aaa' : '#666'};
+    width:34px; height:34px; flex-shrink:0;
+    border:1px solid ${isDark ? 'rgba(255,255,255,0.14)' : 'rgba(47,65,85,0.14)'};
+    border-radius:50%;
+    background:${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.52)'};
+    color:${isDark ? '#d6e2f2' : '#41536b'};
     display:flex; align-items:center; justify-content:center; 
     transition:all 0.2s ease;
   `;
 
   quizBtn.onmouseover = () => {
-    quizBtn.style.background = isDark ? '#444' : '#e0e0e0';
-    quizBtn.style.color = '#ffa500';
-    quizBtn.style.transform = 'scale(1.05)';
+    quizBtn.style.background = isDark ? 'rgba(244,166,42,0.18)' : 'rgba(244,166,42,0.18)';
+    quizBtn.style.color = '#df8a09';
+    quizBtn.style.transform = 'scale(1.08)';
   };
   quizBtn.onmouseout = () => {
-    quizBtn.style.background = isDark ? '#333' : '#f5f5f5';
-    quizBtn.style.color = isDark ? '#aaa' : '#666';
+    quizBtn.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.52)';
+    quizBtn.style.color = isDark ? '#d6e2f2' : '#41536b';
     quizBtn.style.transform = 'scale(1)';
   };
 
@@ -461,8 +672,25 @@ function renderFocusBubble(goal, isDistracted = false) {
     renderRecallSetupModal();
   };
 
+  const endFocusBtn = document.createElement('button');
+  endFocusBtn.id = "focus-end-session";
+  endFocusBtn.type = "button";
+  endFocusBtn.title = "End focus session";
+  endFocusBtn.setAttribute("aria-label", "End focus session");
+  endFocusBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m7 7 10 10M17 7 7 17"/></svg>';
+  endFocusBtn.style.cssText = "cursor:pointer;margin-left:6px;width:26px;height:26px;padding:0;flex-shrink:0;border:1px solid rgba(255,93,93,0.88);border-radius:50%;background:rgba(255,58,58,0.20);color:#ff5c5c;box-shadow:0 0 10px rgba(255,55,55,0.24),inset 0 1px 0 rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;";
+  endFocusBtn.onclick = (e) => {
+    e.stopPropagation();
+    clearNudgePresentation();
+    chrome.storage.local.remove(['userGoal', 'sessionActive', 'subTasks', 'pomoActive'], () => {
+      chrome.alarms.clearAll();
+      chrome.runtime.sendMessage({ action: "broadcastEndSession" });
+    });
+  };
+
   bubbleContent.appendChild(textContainer);
   bubbleContent.appendChild(quizBtn);
+  bubbleContent.appendChild(endFocusBtn);
 
   bubble.appendChild(pomoContainer);
   bubble.appendChild(bubbleContent);
@@ -476,7 +704,7 @@ function renderFocusBubble(goal, isDistracted = false) {
   // Drag Logic
   let isDragging = false;
   bubble.onmousedown = (e) => {
-    if (e.target.closest('#focus-quiz-btn')) return;
+    if (e.target.closest('#focus-quiz-btn, #focus-end-session')) return;
     if (!isValid()) return;
 
     isDragging = true;
@@ -494,20 +722,47 @@ function renderFocusBubble(goal, isDistracted = false) {
     document.onmouseup = () => {
       isDragging = false;
       document.onmousemove = null;
-      bubble.style.transition = "width 0.3s, background 0.3s, box-shadow 0.3s"; // Restore
+      bubble.style.transition = "width 0.28s cubic-bezier(0.25, 1, 0.5, 1), left 0.28s cubic-bezier(0.25, 1, 0.5, 1), right 0.28s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.28s, background 0.3s, box-shadow 0.3s";
+      bubble.dataset.snappedSide = (bubble.getBoundingClientRect().left + bubble.offsetWidth / 2) < window.innerWidth / 2 ? 'left' : 'right';
+      if (isDistractionMode) {
+        const isLeft = bubble.dataset.snappedSide === 'left';
+        bubble.style.left = isLeft ? '16px' : 'auto';
+        bubble.style.right = isLeft ? 'auto' : '16px';
+      } else {
+        collapseBubble();
+      }
     };
   };
+}
+
+function syncBubbleProgressSide(side) {
+  const arc = side === 'left'
+    ? "M34 5 A29 29 0 0 1 34 63"
+    : "M34 5 A29 29 0 0 0 34 63";
+  document.getElementById("bubbleRing")?.setAttribute("d", arc);
+  document.getElementById("bubbleRingTrack")?.setAttribute("d", arc);
+  document.getElementById("bubbleRingFlow")?.setAttribute("d", arc);
 }
 
 function expandBubble() {
   const bubble = document.getElementById("focus-bubble-root");
   const pomo = document.getElementById("pomoContainer");
   const content = document.getElementById("bubbleContent");
+  const mins = document.getElementById("pomoMins");
   if (!bubble) return;
+  if (bubble.dataset.variant === "nudge") return;
 
+  const isLeft = bubble.dataset.snappedSide === 'left';
+  syncBubbleProgressSide(isLeft ? 'left' : 'right');
+  bubble.dataset.expanded = "true";
+  setBubbleCardSurface(bubble, true);
   bubble.style.width = "auto";
-  bubble.style.borderRadius = "14px";
-  bubble.style.paddingRight = "6px"; // Extra padding for button
+  bubble.style.borderRadius = "34px";
+  bubble.style.paddingRight = "7px";
+  bubble.style.left = isLeft ? "0" : "auto";
+  bubble.style.right = isLeft ? "auto" : "0";
+  if (mins) mins.style.transform = "translateX(0)";
+  if (pomo) pomo.style.marginLeft = "0";
 
   if (pomo) pomo.style.display = isDistractionMode ? "none" : "flex"; // Keep pomo visible!
   // Wait, design choice: Do we hide timer on expand? 
@@ -522,13 +777,31 @@ function collapseBubble() {
   const bubble = document.getElementById("focus-bubble-root");
   const pomo = document.getElementById("pomoContainer");
   const content = document.getElementById("bubbleContent");
+  const mins = document.getElementById("pomoMins");
   if (bubble && !isDistractionMode) {
-    bubble.style.width = "60px";
-    bubble.style.borderRadius = "30px";
+    const isLeft = bubble.dataset.snappedSide === 'left';
+    syncBubbleProgressSide(isLeft ? 'left' : 'right');
+    bubble.dataset.expanded = "false";
+    setBubbleCardSurface(bubble, false);
+    bubble.style.width = "68px";
+    bubble.style.borderRadius = "50%";
     bubble.style.paddingRight = "0";
+    bubble.style.left = isLeft ? "-34px" : "auto";
+    bubble.style.right = isLeft ? "auto" : "-34px";
+    if (mins) mins.style.transform = isLeft ? "translateX(10px)" : "translateX(-10px)";
+    if (pomo) pomo.style.marginLeft = "0";
     if (content) content.style.display = "none";
     if (pomo) pomo.style.display = "flex";
   }
+}
+
+function clearNudgePresentation() {
+  isNudgeActive = false;
+  isDistractionMode = false;
+  bodyguard.disconnect();
+  document.getElementById("focus-bridge-glow-top")?.remove();
+  document.getElementById("focus-bridge-nudge-buddy")?.remove();
+  collapseBubble();
 }
 
 // 5. POMODORO SYNC
@@ -538,11 +811,24 @@ setInterval(async () => {
     if (chrome.runtime.lastError || !res) return;
     const ring = document.getElementById("bubbleRing");
     const minsTxt = document.getElementById("pomoMins");
+    const timerDetail = document.getElementById("bubbleTimerDetail");
+    const bubble = document.getElementById("focus-bubble-root");
     if (!ring || !minsTxt) return;
-    if (!res.pomoActive) { ring.style.strokeDashoffset = 164; minsTxt.innerText = "--"; return; }
+    if (!res.pomoActive) {
+      ring.style.strokeDashoffset = 91;
+      minsTxt.innerText = "--";
+      if (timerDetail) timerDetail.innerText = "TIMER PAUSED";
+      return;
+    }
     const remaining = Math.max(0, res.pomoEndTime - Date.now());
-    minsTxt.innerText = Math.floor(remaining / 60000) + "m";
-    ring.style.strokeDashoffset = 164 * (1 - (remaining / (res.workDuration * 60000)));
+    const remainingMinutes = Math.floor(remaining / 60000);
+    const remainingSeconds = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
+    minsTxt.innerText = bubble?.dataset.expanded === "true"
+      ? remainingMinutes + "m"
+      : remainingMinutes;
+    if (timerDetail) timerDetail.innerText = `${remainingMinutes}:${remainingSeconds} LEFT`;
+    // The gold arc begins empty, then fills as the Pomodoro elapsed time grows.
+    ring.style.strokeDashoffset = 91 * (remaining / (res.workDuration * 60000));
   });
 }, 1000);
 
@@ -980,57 +1266,66 @@ function closeOverlayWithSuccess(container) {
 function showBuddyOverlay(goal) {
   if (!isValid() || document.getElementById("focus-buddy-overlay")) return;
 
+  const isDark = currentTheme === 'dark';
+  const overlayBase = isDark ? '#090d14' : '#e8eef5';
+  const panelBackground = isDark ? 'rgba(13, 24, 39, .84)' : 'rgba(248, 251, 255, .84)';
+  const primaryText = isDark ? '#f3f7fc' : '#182536';
+  const mutedText = isDark ? 'rgba(225, 234, 246, .72)' : 'rgba(42, 57, 76, .72)';
+  const panelBorder = isDark ? 'rgba(177, 205, 235, .28)' : 'rgba(54, 80, 110, .24)';
+
   const overlay = document.createElement("div");
   overlay.id = "focus-buddy-overlay";
   overlay.style.cssText = `
-    position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(18, 18, 18, 0.98); z-index: 2147483647; display: flex;
-    flex-direction: column; align-items: center; justify-content: center;
-    color: white; font-family: 'Segoe UI', Tahoma, sans-serif; text-align: center; padding: 20px;
+    position:fixed !important; inset:0; z-index:2147483647; display:grid; place-items:center;
+    overflow:auto; box-sizing:border-box; padding:24px; color:${primaryText};
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; text-align:center;
+    background:radial-gradient(ellipse at 16% 12%,rgba(255,159,31,.22),transparent 36%),radial-gradient(ellipse at 88% 92%,rgba(90,119,255,.14),transparent 42%),${overlayBase};
+    backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
   `;
 
   const buddyBox = document.createElement('div');
   buddyBox.id = "buddyBox";
   Object.assign(buddyBox.style, {
-    maxWidth: "550px", border: "2px solid #ffa500", padding: "40px",
-    borderRadius: "24px", background: "#1e1e1e", boxShadow: "0 20px 50px rgba(0,0,0,0.5)"
+    width: "min(100%, 540px)", boxSizing: "border-box", border: `1px solid ${panelBorder}`, padding: "clamp(28px, 5vw, 44px)",
+    borderRadius: "28px", background: panelBackground, boxShadow: isDark ? "0 28px 76px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.12)" : "0 28px 76px rgba(31,51,78,.22), inset 0 1px 0 rgba(255,255,255,.8)",
+    backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", transform: "translateY(10px)", opacity: "0", transition: "transform .28s cubic-bezier(.2,.8,.2,1), opacity .22s ease, border-color .2s ease"
   });
 
   const h1 = document.createElement('h1');
-  h1.innerText = "Hey buddy, I'm just looking out for you.";
-  h1.style.cssText = "color: #ffa500; margin-bottom: 15px; font-size: 28px;";
+  h1.innerText = "Pause before you drift.";
+  h1.style.cssText = `color:${primaryText};margin:0 0 13px;font-size:clamp(26px,5vw,34px);line-height:1.08;letter-spacing:-.04em;`;
 
   const p1 = document.createElement('p');
-  p1.style.cssText = "font-size: 18px; color: #e0e0e0; margin-bottom: 10px;";
+  p1.style.cssText = `font-size:16px;line-height:1.5;color:${mutedText};margin:0 auto 18px;max-width:440px;`;
   p1.innerText = "";
-  p1.append("You said you wanted to focus on ");
+  p1.append("You chose to focus on ");
   const strong = document.createElement('strong'); strong.innerText = `"${goal}"`;
   p1.append(strong);
   p1.append(".");
 
   const p2 = document.createElement('p');
-  p2.style.cssText = "color: #bbb; font-size: 15px; line-height: 1.6; margin-bottom: 25px; padding: 0 10px;";
+  p2.style.cssText = `color:${mutedText};font-size:13px;line-height:1.6;margin:0 auto 27px;max-width:408px;`;
   p2.innerText = "Once you enter this site, time may fly and we won't be able to recover that delay. Take 10 seconds to breathe—is this really where you want to be right now? I'm trying to help you, not hold you back.";
 
   const btnContainer = document.createElement('div');
-  btnContainer.style.cssText = "display: flex; gap: 15px; justify-content: center; margin-top: 10px;";
+  btnContainer.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:11px;max-width:430px;margin:0 auto;";
 
   const backBtn = document.createElement('button');
   backBtn.id = "backToWorkBtn";
-  backBtn.innerText = "GET ME BACK TO WORK";
-  backBtn.style.cssText = "padding: 14px 28px; background: #ffa500; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; color: #000; font-size: 14px; text-transform: uppercase; transition: transform 0.2s;";
+  backBtn.innerHTML = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 17-5-5 5-5M5 12h14"/></svg><span>Get back to work</span>';
+  backBtn.style.cssText = "min-height:52px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;background:linear-gradient(135deg,#ffc152,#ef9218);border:1px solid rgba(255,220,143,.82);border-radius:14px;font-weight:800;cursor:pointer;color:#171007;font-size:13px;letter-spacing:.01em;box-shadow:0 10px 22px rgba(238,143,23,.24);transition:transform .18s ease,box-shadow .18s ease;";
 
   const accessBtn = document.createElement('button');
   accessBtn.id = "accessBtn";
   accessBtn.disabled = true;
-  accessBtn.style.cssText = "padding: 14px 28px; background: transparent; border: 1px solid #444; border-radius: 10px; color: #666; cursor: not-allowed; font-size: 13px;";
+  accessBtn.style.cssText = `min-height:52px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:12px 14px;background:rgba(255,255,255,.055);border:1px solid ${panelBorder};border-radius:14px;color:${isDark ? 'rgba(225,234,246,.42)' : 'rgba(42,57,76,.48)'};cursor:not-allowed;font-size:13px;font-weight:700;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;`;
   // "Wait <span id='buddyTimer'>10</span>s..."
   accessBtn.append("Wait ");
   const timerSpan = document.createElement('span');
   timerSpan.id = "buddyTimer";
   timerSpan.innerText = "10";
   accessBtn.append(timerSpan);
-  accessBtn.append("s...");
+  accessBtn.append("s to continue");
 
   btnContainer.appendChild(backBtn);
   btnContainer.appendChild(accessBtn);
@@ -1043,37 +1338,39 @@ function showBuddyOverlay(goal) {
   overlay.appendChild(buddyBox);
 
   document.documentElement.appendChild(overlay);
+  requestAnimationFrame(() => { buddyBox.style.opacity = '1'; buddyBox.style.transform = 'translateY(0)'; });
 
   let t = 10;
   const int = setInterval(() => {
     if (!isValid()) { clearInterval(int); return; }
     t--;
-    const el = document.getElementById("buddyTimer");
-    if (el) el.innerText = t;
+    if (timerSpan.isConnected) timerSpan.innerText = t;
     if (t <= 0) {
       clearInterval(int);
-      const btn = document.getElementById("accessBtn");
-      if (btn) {
+      if (accessBtn.isConnected) {
+        const btn = accessBtn;
         btn.disabled = false;
-        btn.innerText = "I've thought about it, let me in";
-        btn.style.color = "#aaa";
-        btn.style.borderColor = "#666";
+        btn.innerHTML = '<span>I understand, continue</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>';
+        btn.style.color = primaryText;
+        btn.style.borderColor = isDark ? 'rgba(196,215,240,.42)' : 'rgba(53,76,106,.36)';
+        btn.style.background = isDark ? 'rgba(255,255,255,.095)' : 'rgba(255,255,255,.74)';
         btn.style.cursor = "pointer";
       }
     }
   }, 1000);
 
   // THE REWARD REDIRECT
-  document.getElementById("backToWorkBtn").onclick = () => {
-    const box = document.getElementById("buddyBox");
+  backBtn.onclick = () => {
+    clearInterval(int);
+    const box = buddyBox;
     box.style.transform = "scale(0.95)";
     box.innerHTML = '';
     const h1Reward = document.createElement('h1');
     h1Reward.innerText = "Legendary Choice!";
-    h1Reward.style.cssText = "color: #2ecc71; font-size: 32px;";
+    h1Reward.style.cssText = "color:#5fd59a;font-size:30px;margin:0 0 12px;";
 
     const pReward = document.createElement('p');
-    pReward.style.cssText = "font-size: 18px; color: #fff;";
+    pReward.style.cssText = `font-size:16px;line-height:1.5;color:${primaryText};margin:0;`;
     pReward.append("Returning to your path: ");
     const strongReward = document.createElement('strong');
     strongReward.innerText = goal;
@@ -1081,7 +1378,7 @@ function showBuddyOverlay(goal) {
 
     box.appendChild(h1Reward);
     box.appendChild(pReward);
-    box.style.borderColor = "#2ecc71";
+    box.style.borderColor = "rgba(95,213,154,.72)";
 
     fireRibbons('big'); // Explosive reward!
 
@@ -1090,14 +1387,42 @@ function showBuddyOverlay(goal) {
     }, 2500);
   };
 
-  document.getElementById("accessBtn").onclick = () => {
+  accessBtn.onclick = () => {
+    if (accessBtn.disabled) return;
+    clearInterval(int);
     isDistractionMode = true; // Stay expanded
     overlay.remove();
   };
 }
 
 function fireRibbons(type) {
-  if (!isValid() || document.hidden) return;
+  if (!isValid() || document.hidden || !boostStickersEnabled) return;
+  document.getElementById("focus-boost-sticker")?.remove();
+  if (!document.getElementById("focus-boost-sticker-style")) {
+    const style = document.createElement("style");
+    style.id = "focus-boost-sticker-style";
+    style.textContent = `@font-face { font-family:'Next Bravo'; src:url('${chrome.runtime.getURL('assets/fonts/Next Bravo.ttf')}') format('truetype'); font-display:swap; } @keyframes focusBoostSticker { 0% { opacity:0; transform:translateY(42px) scale(.84) rotate(-4deg); } 12% { opacity:1; transform:translateY(0) scale(1.04) rotate(0); } 68% { opacity:1; transform:translateY(-280px) scale(1); } 100% { opacity:0; transform:translateY(-520px) scale(.90); } }`;
+    document.documentElement.appendChild(style);
+  }
+  const copySets = type === 'milestone-30'
+    ? [['SETTLE', 'IN'], ['STAY', 'PRESENT'], ['BUILD', 'RHYTHM'], ['ONE', 'TASK'], ['KEEP', 'STEADY']]
+    : type === 'milestone-60'
+      ? [['HALF', 'WAY'], ['DEEP', 'FOCUS'], ['KEEP', 'FLOWING'], ['MOMENTUM', 'ON'], ['STAY', 'WITH IT']]
+      : type === 'milestone-90'
+        ? [['FINAL', 'STRETCH'], ['CLOSE', 'STRONG'], ['NEARLY', 'DONE'], ['LAST', 'MINUTES'], ['FINISH', 'CLEAN']]
+        : type === 'big'
+          ? [['BACK', 'ON TRACK'], ['RETURN', 'TO GOAL'], ['FOCUS', 'RESET']]
+          : [['TIMER', 'DONE'], ['FOCUS', 'COMPLETE'], ['YOU', 'MADE IT'], ['SESSION', 'COMPLETE'], ['WELL', 'DONE']];
+  const copy = copySets[Math.floor(Math.random() * copySets.length)];
+  const sticker = document.createElement("div");
+  sticker.id = "focus-boost-sticker";
+  sticker.setAttribute("aria-hidden", "true");
+  sticker.style.cssText = "position:fixed;right:22px;bottom:28px;z-index:2147483647;pointer-events:none;text-align:right;color:#ffe7a7;font-family:'Next Bravo';line-height:.78;letter-spacing:-.05em;text-shadow:3px 3px 0 #6d3300,0 0 18px rgba(255,151,0,.88);animation:focusBoostSticker 3s cubic-bezier(.18,.82,.25,1) both;";
+  sticker.innerHTML = `<span style="display:block;font-size:34px;">${copy[0]}</span><span style="display:block;font-size:48px;">${copy[1]}</span>`;
+  document.documentElement.appendChild(sticker);
+  setTimeout(() => sticker.remove(), 3100);
+  return;
+
   document.getElementById("celebration-canvas")?.remove();
   const canvas = document.createElement('canvas');
   canvas.id = "celebration-canvas";
@@ -1105,10 +1430,23 @@ function fireRibbons(type) {
   document.documentElement.appendChild(canvas);
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-  let p = []; for (let i = 0; i < (type === 'big' ? 100 : 35); i++) { p.push({ x: Math.random() * canvas.width, y: -20, w: Math.random() * 8 + 4, h: Math.random() * 15 + 5, c: `hsl(${Math.random() * 360}, 80%, 60%)`, s: Math.random() * 5 + 3, r: Math.random() * 360, rs: Math.random() * 12 - 6 }); }
+  const colors = ['#ffd36e', '#ff9f1c', '#ff6b35', '#7dd3fc'];
+  const p = [];
+  for (let i = 0; i < (type === 'big' ? 92 : 42); i++) {
+    p.push({ x: canvas.width - 8 - Math.random() * 68, y: canvas.height + Math.random() * 90, w: Math.random() * 3 + 2, h: Math.random() * 20 + 24, c: colors[Math.floor(Math.random() * colors.length)], s: Math.random() * 9 + 15, drift: Math.random() * 1.2 - .6 });
+  }
   function anim() {
     if (!isValid()) return; ctx.clearRect(0, 0, canvas.width, canvas.height); let v = false;
-    p.forEach(particle => { particle.y += particle.s; particle.r += particle.rs; if (particle.y < canvas.height) { v = true; ctx.save(); ctx.translate(particle.x, particle.y); ctx.rotate(particle.r * Math.PI / 180); ctx.fillStyle = particle.c; ctx.fillRect(-particle.w / 2, -particle.h / 2, particle.w, particle.h); ctx.restore(); } });
+    p.forEach(particle => {
+      particle.y -= particle.s; particle.x += particle.drift;
+      if (particle.y > -particle.h) {
+        v = true; ctx.save(); ctx.translate(particle.x, particle.y); ctx.fillStyle = particle.c;
+        ctx.shadowColor = particle.c; ctx.shadowBlur = 9;
+        ctx.fillRect(-particle.w / 2, particle.h * .37, particle.w, particle.h * .63);
+        ctx.beginPath(); ctx.moveTo(-particle.w * 2.3, particle.h * .45); ctx.lineTo(0, 0); ctx.lineTo(particle.w * 2.3, particle.h * .45); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    });
     if (v) requestAnimationFrame(anim); else canvas.remove();
   } anim();
 }
@@ -1118,7 +1456,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (!isValid()) return;
 
   if (request.action === "requestContext") {
-    const bodySnippet = document.body ? document.body.innerText.substring(0, 1000) : "";
+    // Prefer semantic page content over navigation, cookie banners, and app chrome.
+    // The background combines this with the title and caps it at 2,000 characters.
+    const contentRoot = document.querySelector('main, article') || document.body;
+    let bodySnippet = contentRoot?.innerText || "";
+    bodySnippet = bodySnippet
+      .replace(/^(?:\s*(?:accept|reject|manage|cookie settings|privacy settings|allow)\b[^\n]{0,120}\n?)+/i, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 2000);
     sendResponse({ context: { title: document.title, bodySnippet: bodySnippet } });
   }
   else if (request.action === "showOverlay") {
@@ -1134,9 +1480,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ status: "ok" });
   }
   else if (request.action === "clearIntervention") {
-    isDistractionMode = false;
-    collapseBubble();
-    document.getElementById("focus-bridge-glow-top")?.remove();
+    clearNudgePresentation();
     document.getElementById("focus-buddy-overlay")?.remove();
     sendResponse({ status: "ok" });
   }
@@ -1151,6 +1495,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     bodyguard.disconnect();
     document.getElementById("focus-bubble-root")?.remove();
     document.getElementById("focus-bridge-glow-top")?.remove();
+    document.getElementById("focus-bridge-nudge-buddy")?.remove();
     document.getElementById("focus-buddy-overlay")?.remove();
     document.getElementById("recall-anchor-overlay")?.remove();
     sendResponse({ status: "ok" });
@@ -1168,8 +1513,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // 9. INITIAL LOAD
-chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive', 'toolsDockEnabled'], (res) => {
+chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive', 'toolsDockEnabled', 'theme', 'nudgeBuddyEnabled', 'boostStickersEnabled', 'userName'], (res) => {
   if (!isValid()) return;
+  currentTheme = res.theme === 'dark' ? 'dark' : 'light';
+  nudgeBuddyEnabled = !!res.nudgeBuddyEnabled;
+  boostStickersEnabled = res.boostStickersEnabled !== false;
+  focusUserName = (res.userName || '').trim();
   if (res.toolsDockEnabled !== false) renderGlobalToolsDock();
 
   // FOCUS SESSION (Dependent)
@@ -1190,6 +1539,9 @@ chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive', 'toolsDoc
 // 10. THEME SYNC
 chrome.storage.onChanged.addListener((changes) => {
   if (isValid() && changes.theme) updateBubbleTheme(changes.theme.newValue);
+  if (changes.nudgeBuddyEnabled) nudgeBuddyEnabled = !!changes.nudgeBuddyEnabled.newValue;
+  if (changes.boostStickersEnabled) boostStickersEnabled = changes.boostStickersEnabled.newValue !== false;
+  if (changes.userName) focusUserName = (changes.userName.newValue || '').trim();
   if (isValid() && changes.recallActive) {
     recallActive = changes.recallActive.newValue;
   }
@@ -1198,6 +1550,9 @@ chrome.storage.onChanged.addListener((changes) => {
 // 11. CONFETTI CELEBRATION
 // 11. CONFETTI CELEBRATION
 function launchConfetti(type = 'finish') {
+  fireRibbons(type);
+  return;
+
   const canvas = document.createElement('canvas');
   canvas.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999999;";
   document.body.appendChild(canvas);
@@ -1251,8 +1606,10 @@ chrome.runtime.onMessage.addListener((msg) => {
 
   if (msg.action === "clearIntervention") {
     // Existing logic might be elsewhere, but let's ensure cleanup here too
+    clearNudgePresentation();
     const flash = document.getElementById("focus-bridge-glow-top");
     if (flash) flash.remove();
+    document.getElementById("focus-bridge-nudge-buddy")?.remove();
 
     // Also remove any overlays if present
     const overlay = document.getElementById("focus-overlay-root");

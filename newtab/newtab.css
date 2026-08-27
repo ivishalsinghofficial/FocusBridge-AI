@@ -1,4 +1,6 @@
 :root { --font-stack: "Avenir Next", Avenir, "Helvetica Neue", "Segoe UI", Arial, sans-serif; --text: #f7f0e3; --muted: rgba(247, 240, 227, .64); --line: rgba(247, 240, 227, .22); --glass: rgba(255,255,255,.07); --accent: #d6a348; --scene-base: #030303; --scene-deep: #17130b; --pool-one: rgba(232,181,70,.30); --pool-two: rgba(133,81,21,.24); }
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }
 /* Search-first FocusBridge layout: familiar hierarchy without imitating
    Chrome's branded New Tab surface. */
 #focus-page { justify-content:flex-start; padding-top:clamp(92px,14vh,170px); padding-bottom:190px; } .clock { font-size:clamp(44px,5vw,68px); letter-spacing:-.055em; } .hero { margin-top:22px; } #greeting { margin-bottom:16px; font-size:clamp(24px,2.2vw,31px); } .goal-input { width:min(310px,100%); padding:5px 8px 10px; font-size:15px; } .search-form { width:min(620px,100%); margin-top:26px; } #search-input { height:54px; border-radius:28px; padding-left:50px; font-size:16px; background:rgba(8,8,8,.3); box-shadow:0 12px 34px rgba(0,0,0,.18); } .focus-stat { bottom:184px; max-width:560px; font-size:13px; } .shortcuts { bottom:78px; gap:16px; } .shortcuts a { width:74px; gap:7px; font-size:11px; } .shortcuts img,.shortcuts a.shortcut-fallback::before { width:32px; height:32px; border-radius:50%; }

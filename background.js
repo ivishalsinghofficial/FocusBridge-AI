@@ -5,6 +5,11 @@ import { setupOffscreen, setupClipboardOffscreen, isRelevantKeywords } from './m
 
 const tabStates = new Map();
 let lastScore = 1.0;
+// Calibrated with Xenova/all-MiniLM-L6-v2: cartoon/video 0.13, MDN JS guide
+// 0.71, and general tech news mentioning JavaScript 0.39. Scores below this
+// level receive a nudge; keep this named value easy to tune with new samples.
+const SEMANTIC_TRIAGE_THRESHOLD = 0.32;
+const TRIAGE_CONTENT_DELAY_MS = 2800;
 const localDateKey = () => new Date().toLocaleDateString('en-CA');
 const CAPTURE_DB = 'focusbridge-captures';
 const CAPTURE_STORE = 'screenshots';
@@ -89,33 +94,21 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
           return;
         }
 
-        // TIER 3: KEYWORDS
-        if (isRelevantKeywords(focusGoal, tab.title)) {
-          chrome.tabs.sendMessage(tabId, { action: "clearIntervention" }).catch(() => { });
-          lastScore = 1.0;
-        } else {
-          // TIER 4: AI SCRAPER
-          chrome.tabs.sendMessage(tabId, { action: "requestContext" }, async (response) => {
-            if (chrome.runtime.lastError || !response?.context) return;
-            const fullText = `${response.context.title} ${response.context.bodySnippet}`.toLowerCase();
-
-            if (isRelevantKeywords(focusGoal, fullText)) {
-              chrome.tabs.sendMessage(tabId, { action: "clearIntervention" }).catch(() => { });
-              lastScore = 1.0;
-            } else {
-              await setupOffscreen();
-              // FIX: Sending target 'offscreen' so the AI engine hears it
-              chrome.runtime.sendMessage({
-                target: 'offscreen',
-                goal: focusGoal,
-                title: fullText.substring(0, 500),
-                tabId: tabId
-              });
-            }
+        // TIER 3: semantic triage. Do not use individual keyword matches here:
+        // they caused irrelevant pages to skip the embedding comparison entirely.
+        chrome.tabs.sendMessage(tabId, { action: "requestContext" }, async (response) => {
+          if (chrome.runtime.lastError || !response?.context) return;
+          const fullText = `${response.context.title} ${response.context.bodySnippet}`.toLowerCase();
+          await setupOffscreen();
+          chrome.runtime.sendMessage({
+            target: 'offscreen',
+            goal: focusGoal,
+            title: fullText.substring(0, 2000),
+            tabId: tabId
           });
-        }
+        });
       });
-    }, 1500);
+    }, TRIAGE_CONTENT_DELAY_MS);
     tabStates.set(tabId, timer);
   }
 });
@@ -186,7 +179,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const end = Date.now() + (message.minutes * 60000);
     chrome.storage.local.set({ pomoActive: true, pomoEndTime: end, workDuration: message.minutes, currentStartTime: Date.now(), milestonesReached: [] });
     chrome.alarms.create('pomoAlarm', { delayInMinutes: message.minutes });
-    chrome.alarms.create('milestoneTicker', { periodInMinutes: 1 });
+    chrome.alarms.clear('milestoneTicker');
+    chrome.alarms.create('pomoMilestone30', { when: Date.now() + (message.minutes * 60000 * 0.30) });
+    chrome.alarms.create('pomoMilestone60', { when: Date.now() + (message.minutes * 60000 * 0.60) });
+    chrome.alarms.create('pomoMilestone90', { when: Date.now() + (message.minutes * 60000 * 0.90) });
     return false;
   }
 
@@ -208,7 +204,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.target === 'background') {
     lastScore = message.score;
-    if (lastScore < 0.15) {
+    if (lastScore < SEMANTIC_TRIAGE_THRESHOLD) {
       chrome.tabs.sendMessage(message.tabId, { action: "showIntervention", goal: message.goal }).catch(() => { });
     } else {
       chrome.tabs.sendMessage(message.tabId, { action: "clearIntervention" }).catch(() => { });
@@ -313,6 +309,18 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       return;
     }
 
+    const milestoneTypes = {
+      pomoMilestone30: 'milestone-30',
+      pomoMilestone60: 'milestone-60',
+      pomoMilestone90: 'milestone-90'
+    };
+    if (milestoneTypes[alarm.name]) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { action: "fireConfetti", type: milestoneTypes[alarm.name] }).catch(() => { });
+      });
+      return;
+    }
+
     // B. MILESTONE CHECKER (milestoneTicker)
     if (alarm.name === 'milestoneTicker') {
       const remaining = res.pomoEndTime - Date.now();
@@ -329,7 +337,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         milestones.push(30);
         updated = true;
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { action: "fireConfetti", type: "milestone" }).catch(() => { });
+          if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { action: "fireConfetti", type: "milestone-30" }).catch(() => { });
         });
       }
 
@@ -338,7 +346,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         milestones.push(60);
         updated = true;
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { action: "fireConfetti", type: "milestone" }).catch(() => { });
+          if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { action: "fireConfetti", type: "milestone-60" }).catch(() => { });
+        });
+      }
+
+      // 90%
+      if (progress >= 90 && !milestones.includes(90)) {
+        milestones.push(90);
+        updated = true;
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { action: "fireConfetti", type: "milestone-90" }).catch(() => { });
         });
       }
 
