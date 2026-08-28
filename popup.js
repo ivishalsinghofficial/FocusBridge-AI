@@ -245,7 +245,7 @@ document.getElementById('startFocusBtn').onclick = () => {
 };
 
 document.getElementById('endFocusBtn').onclick = () => {
-  chrome.storage.local.remove(['userGoal', 'sessionActive', 'subTasks', 'pomoActive'], () => {
+  chrome.storage.local.remove(['userGoal', 'sessionActive', 'subTasks', 'pomoActive', 'pomoEndTime', 'workDuration', 'todaysGoal', 'todaysGoalTimestamp', 'todaysGoalDate'], () => {
     chrome.alarms.clearAll();
     chrome.runtime.sendMessage({ action: "broadcastEndSession" });
     location.reload();

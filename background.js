@@ -11,6 +11,8 @@ let lastScore = 1.0;
 const SEMANTIC_TRIAGE_THRESHOLD = 0.32;
 const TRIAGE_CONTENT_DELAY_MS = 2800;
 const localDateKey = () => new Date().toLocaleDateString('en-CA');
+// Screenshot history has been retired; remove the old extension-only cache.
+indexedDB.deleteDatabase('focusbridge-captures');
 const CAPTURE_DB = 'focusbridge-captures';
 const CAPTURE_STORE = 'screenshots';
 
@@ -55,7 +57,7 @@ async function saveCapture(imageDataUrl, format = 'jpeg') {
     store.add({ timestamp: Date.now(), imageDataUrl: image });
     const cursor = store.index('timestamp').openCursor();
     const records = [];
-    cursor.onsuccess = () => { const current = cursor.result; if (current) { records.push(current); current.continue(); } else records.slice(0, -30).forEach(item => store.delete(item.primaryKey)); };
+    cursor.onsuccess = () => { const current = cursor.result; if (current) { records.push(current); current.continue(); } else records.slice(0, -10).forEach(item => store.delete(item.primaryKey)); };
     transaction.oncomplete = resolve; transaction.onerror = () => reject(transaction.error);
   });
   db.close();
@@ -115,20 +117,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // 2. MASTER MESSAGE LISTENER (Consolidated)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (['saveCapture', 'listCaptures', 'deleteCapture'].includes(message.action)) {
-    (async () => {
-      try {
-        if (message.action === 'saveCapture') {
-          await saveCapture(message.dataUrl, message.format);
-          chrome.runtime.sendMessage({ action: 'captureSaved' }).catch(() => {});
-        }
-        if (message.action === 'listCaptures') return sendResponse({ success: true, captures: await listCaptures() });
-        if (message.action === 'deleteCapture') await deleteCapture(message.id);
-        sendResponse({ success: true });
-      } catch (error) { sendResponse({ success: false, error: error.message }); }
-    })();
-    return true;
-  }
   if (message.action === "captureVisibleScreenshot") {
     (async () => {
       try {
@@ -309,6 +297,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     // A. TIME'S UP (pomoAlarm)
     if (alarm.name === 'pomoAlarm') {
       chrome.storage.local.set({ pomoActive: false, pomoMilestones: [] });
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => chrome.tabs.sendMessage(tab.id, { action: 'timerEnded' }).catch(() => {}));
+      });
       // Notify all tabs to celebrate
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { action: "fireConfetti", type: "finish" }).catch(() => { });

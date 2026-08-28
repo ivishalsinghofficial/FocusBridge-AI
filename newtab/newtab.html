@@ -31,8 +31,20 @@
 
     <section class="hero" aria-label="Today's focus">
       <h1 id="greeting">Good day</h1>
-      <input id="goal-input" class="goal-input" type="text" maxlength="180" autocomplete="off"
-        placeholder="What's your focus today?" aria-label="Today's focus goal">
+      <div class="goal-start">
+        <input id="goal-input" class="goal-input" type="text" maxlength="180" autocomplete="off"
+          placeholder="What's your focus today?" aria-label="Today's focus goal">
+        <button id="start-focus-session" type="button" title="Start focus session" aria-label="Start focus session">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="focus-arrow" d="M5 12h13M13 6l6 6-6 6"/><path class="focus-close" d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div id="pomodoro-presets" class="pomodoro-presets" role="group" aria-label="Start a Pomodoro timer">
+        <span class="pomodoro-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M12 3v3M7 6h10M18 9.5A8 8 0 1 1 6 9.5M17.5 4.5l1.5-1.5"/></svg>Pomodoro</span>
+        <button type="button" class="pomo-preset" data-minutes="15">15</button>
+        <button type="button" class="pomo-preset" data-minutes="25">25</button>
+        <button type="button" class="pomo-preset" data-minutes="35">35</button>
+        <button type="button" class="pomo-preset" data-minutes="45">45</button>
+      </div>
       <form id="search-form" class="search-form" role="search">
         <label class="sr-only" for="search-input">Search Google</label>
         <input id="search-input" type="search" autocomplete="off" placeholder="Search Google or type a URL" aria-label="Search Google or type a URL">
@@ -47,6 +59,13 @@
     <p id="focus-stat" class="focus-stat" aria-live="polite"></p>
     <nav id="shortcuts" class="shortcuts" aria-label="Most visited sites" hidden></nav>
   </main>
+  <section id="homepage-checklist" class="homepage-checklist" aria-label="Quick checklist">
+    <div id="checklist-rows" class="checklist-rows"></div>
+    <form id="checklist-add-form" class="checklist-add-form">
+      <input id="checklist-add-input" type="text" maxlength="40" autocomplete="off" placeholder="Add a stickpost" aria-label="Add a checklist task">
+      <button id="checklist-add-button" type="submit" title="Add task" aria-label="Add task"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    </form>
+  </section>
 
   <button id="drawer-toggle" class="drawer-toggle" type="button" aria-controls="detail-drawer" aria-expanded="false" aria-label="Open focus details">⌃</button>
   <aside id="detail-drawer" class="detail-drawer" aria-label="Focus details" aria-hidden="true">

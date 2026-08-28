@@ -17,6 +17,8 @@
   THEMES['paper & ink'] = THEMES.paper;
   THEMES['dopamine minimal'] = THEMES.dopamine;
   const $ = id => document.getElementById(id);
+  let homepageSessionActive = false;
+  let checklistItems = [];
   const todayKey = () => new Date().toLocaleDateString('en-CA');
   const QUOTE_ENDPOINT = 'https://thequoteshub.com/api/tags/motivation';
   // Aliases are search terms only; selections always persist the IANA name.
@@ -144,6 +146,14 @@
     toggle.textContent = dayMode ? '☾' : '☼';
     toggle.setAttribute('aria-pressed', String(dayMode));
     toggle.setAttribute('aria-label', `Switch to ${dayMode ? 'night' : 'day'} mode`);
+  }
+
+  function applyHomepageBackground(dataUrl) {
+    const scene = $('rainbow-scene');
+    const hasBackground = Boolean(dataUrl);
+    scene.classList.toggle('has-custom-background', hasBackground);
+    if (hasBackground) document.documentElement.style.setProperty('--homepage-background-image', `url("${dataUrl}")`);
+    else document.documentElement.style.removeProperty('--homepage-background-image');
   }
 
   function updateClock() {
@@ -278,6 +288,130 @@
     chrome.storage.local.set({ todaysGoal: value, todaysGoalTimestamp: Date.now(), todaysGoalDate: todayKey() });
   }
 
+  function updateStartFocusButton() {
+    const hasGoal = Boolean($('goal-input').value.trim());
+    const button = $('start-focus-session');
+    const showSessionControl = hasGoal || homepageSessionActive;
+    button.classList.toggle('is-visible', showSessionControl);
+    button.classList.toggle('is-ending', homepageSessionActive);
+    button.disabled = !showSessionControl;
+    button.title = homepageSessionActive ? 'End focus session' : 'Start focus session';
+    button.setAttribute('aria-label', homepageSessionActive ? 'End focus session' : 'Start focus session');
+    $('pomodoro-presets').classList.toggle('is-visible', showSessionControl);
+  }
+
+  function updatePomodoroPresets(timer = {}) {
+    const active = timer.pomoActive === true;
+    const duration = Number(timer.workDuration);
+    document.querySelectorAll('.pomo-preset').forEach(button => {
+      const selected = active && Number(button.dataset.minutes) === duration;
+      button.classList.toggle('is-active', selected);
+      button.disabled = active && !selected;
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    $('pomodoro-presets').classList.toggle('has-active-timer', active);
+  }
+
+  function persistChecklist() {
+    chrome.storage.local.set({ homepageChecklist: checklistItems });
+  }
+
+  function renderChecklist() {
+    const rows = $('checklist-rows');
+    rows.replaceChildren();
+    checklistItems.forEach(item => {
+      const row = document.createElement('div');
+      row.className = `checklist-row${item.completed ? ' is-complete' : ''}`;
+      const toggle = document.createElement('button');
+      toggle.type = 'button'; toggle.className = 'checklist-toggle';
+      toggle.setAttribute('role', 'checkbox'); toggle.setAttribute('aria-checked', String(Boolean(item.completed)));
+      toggle.setAttribute('aria-label', `${item.completed ? 'Mark incomplete' : 'Mark complete'}: ${item.text}`);
+      toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
+      toggle.addEventListener('click', () => { item.completed = !item.completed; persistChecklist(); renderChecklist(); });
+      const text = document.createElement('span');
+      text.className = 'checklist-text'; text.textContent = item.text;
+      const remove = document.createElement('button');
+      remove.type = 'button'; remove.className = 'checklist-delete'; remove.title = 'Delete task';
+      remove.setAttribute('aria-label', `Delete task: ${item.text}`);
+      remove.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg>';
+      remove.addEventListener('click', () => { checklistItems = checklistItems.filter(task => task.id !== item.id); persistChecklist(); renderChecklist(); });
+      row.append(toggle, text, remove); rows.append(row);
+    });
+    const atLimit = checklistItems.length >= 6;
+    $('checklist-add-input').disabled = atLimit;
+    $('checklist-add-button').disabled = atLimit;
+    $('checklist-add-input').placeholder = atLimit ? 'Checklist is full' : 'Add a stickpost';
+  }
+
+  function addChecklistItem(event) {
+    event.preventDefault();
+    const input = $('checklist-add-input');
+    const text = input.value.trim();
+    if (!text || checklistItems.length >= 6) return;
+    checklistItems.push({ id: crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`, text: text.slice(0, 40), completed: false });
+    input.value = ''; persistChecklist(); renderChecklist(); input.focus();
+  }
+
+  function startPresetPomodoro(event) {
+    const minutes = Number(event.currentTarget.dataset.minutes);
+    if (!Number.isFinite(minutes) || event.currentTarget.classList.contains('is-active')) return;
+
+    // A typed homepage intention should not require a second click before its
+    // timer can bring the focus widget onto open pages.
+    chrome.storage.local.get('sessionActive', ({ sessionActive }) => {
+      if (!sessionActive && $('goal-input').value.trim()) startFocusSession();
+    });
+    chrome.runtime.sendMessage({ action: 'startPomo', minutes });
+    updatePomodoroPresets({ pomoActive: true, workDuration: minutes });
+    $('focus-stat').textContent = `${minutes}-minute Pomodoro started.`;
+  }
+
+  function startFocusSession() {
+    const goal = $('goal-input').value.trim();
+    if (!goal) {
+      $('goal-input').focus();
+      return;
+    }
+
+    const now = Date.now();
+    chrome.storage.local.set({
+      userGoal: goal,
+      sessionActive: true,
+      subTasks: [],
+      todaysGoal: goal,
+      todaysGoalTimestamp: now,
+      todaysGoalDate: todayKey()
+    }, () => {
+      homepageSessionActive = true;
+      updateStartFocusButton();
+      $('buddy-status').textContent = `Buddy is supporting: ${goal}`;
+      $('focus-stat').textContent = 'Focus session started. Your focus widget is ready on your open pages.';
+    });
+  }
+
+  function endFocusSession() {
+    chrome.storage.local.remove([
+      'userGoal', 'sessionActive', 'subTasks', 'pomoActive', 'pomoEndTime',
+      'workDuration', 'currentStartTime', 'milestonesReached', 'pomoMilestones',
+      'todaysGoal', 'todaysGoalTimestamp', 'todaysGoalDate'
+    ], () => {
+      chrome.alarms.clearAll();
+      chrome.runtime.sendMessage({ action: 'broadcastEndSession' });
+      homepageSessionActive = false;
+      $('goal-input').value = '';
+      updateStartFocusButton();
+      updatePomodoroPresets({ pomoActive: false });
+      $('buddy-status').textContent = 'Buddy is ready when you begin a focus session.';
+      $('focus-stat').textContent = 'Focus session ended.';
+      $('goal-input').focus();
+    });
+  }
+
+  function handleFocusSessionButton() {
+    if (homepageSessionActive) endFocusSession();
+    else startFocusSession();
+  }
+
   function setupTimezonePicker(side, storedZone, fallbackZone) {
     const input = $(`${side}-timezone`);
     const results = $(`${side}-timezone-results`);
@@ -329,9 +463,15 @@
   function initialise(data) {
     applyTheme(data.theme);
     applyAppearance(data.newtabAppearance || 'night');
+    applyHomepageBackground(data.homepageBackground);
     renderGreeting(data.userName || '');
     const storedToday = data.todaysGoalDate === todayKey() ? data.todaysGoal : '';
     $('goal-input').value = storedToday || '';
+    homepageSessionActive = data.sessionActive === true;
+    updateStartFocusButton();
+    updatePomodoroPresets(data);
+    checklistItems = Array.isArray(data.homepageChecklist) ? data.homepageChecklist.slice(0, 6).filter(item => typeof item?.text === 'string' && item.text.trim()) : [];
+    renderChecklist();
     setupTimezonePicker('left', data.worldClockCities?.[0] ?? data.leftWorldTimeZone, 'America/New_York');
     setupTimezonePicker('right', data.worldClockCities?.[1] ?? data.rightWorldTimeZone, 'Europe/London');
     $('buddy-status').textContent = data.sessionActive && data.userGoal ? `Buddy is supporting: ${data.userGoal}` : 'Buddy is ready when you begin a focus session.';
@@ -414,10 +554,14 @@
       recognition.start();
     });
     $('goal-input').addEventListener('change', saveGoal);
+    $('goal-input').addEventListener('input', updateStartFocusButton);
+    $('start-focus-session').addEventListener('click', handleFocusSessionButton);
+    document.querySelectorAll('.pomo-preset').forEach(button => button.addEventListener('click', startPresetPomodoro));
+    $('checklist-add-form').addEventListener('submit', addChecklistItem);
     $('goal-input').addEventListener('keydown', event => {
       if (event.key === 'Enter') {
-        saveGoal();
-        $('search-input').focus();
+        event.preventDefault();
+        handleFocusSessionButton();
       }
     });
 
@@ -433,6 +577,19 @@
     chrome.storage.onChanged.addListener(changes => {
       if (changes.theme) applyTheme(changes.theme.newValue);
       if (changes.newtabAppearance) applyAppearance(changes.newtabAppearance.newValue || 'night');
+      if (changes.homepageBackground) applyHomepageBackground(changes.homepageBackground.newValue || '');
+      if (changes.homepageChecklist) {
+        checklistItems = Array.isArray(changes.homepageChecklist.newValue) ? changes.homepageChecklist.newValue.slice(0, 6) : [];
+        renderChecklist();
+      }
+      if (changes.sessionActive) {
+        homepageSessionActive = changes.sessionActive.newValue === true;
+        if (!homepageSessionActive) $('goal-input').value = '';
+        updateStartFocusButton();
+      }
+      if (changes.pomoActive || changes.workDuration) {
+        chrome.storage.local.get(['pomoActive', 'workDuration'], updatePomodoroPresets);
+      }
       if (changes.showHomepageShortcuts) $('shortcuts').hidden = !changes.showHomepageShortcuts.newValue;
       if (changes.userName) renderGreeting(changes.userName.newValue || '');
       if (changes.worldClockCities) {
@@ -450,7 +607,7 @@
 
     updateClock();
     setInterval(updateClock, 1000);
-    chrome.storage.local.get(['theme', 'newtabAppearance', 'userName', 'name', 'todaysGoal', 'todaysGoalDate', 'history', 'sessionActive', 'userGoal', 'showHomepageShortcuts', 'dailyMotivationQuote', 'dailyMotivationQuoteDate', 'worldClockCities', 'leftWorldTimeZone', 'rightWorldTimeZone'], data => {
+    chrome.storage.local.get(['theme', 'newtabAppearance', 'homepageBackground', 'homepageChecklist', 'userName', 'name', 'todaysGoal', 'todaysGoalDate', 'history', 'sessionActive', 'userGoal', 'pomoActive', 'workDuration', 'showHomepageShortcuts', 'dailyMotivationQuote', 'dailyMotivationQuoteDate', 'worldClockCities', 'leftWorldTimeZone', 'rightWorldTimeZone'], data => {
       initialise(data);
       document.documentElement.classList.add('focusbridge-ready');
     });

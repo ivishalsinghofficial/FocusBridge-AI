@@ -15,6 +15,15 @@
       <div><h2>FocusBridge Homepage</h2><p>Show your focused New Tab experience. Turn it off to open Google instead.</p></div>
       <label class="switch"><input id="homepage-toggle" type="checkbox" aria-label="Enable FocusBridge Homepage"><span></span></label>
     </section>
+    <section class="background-setting">
+      <div><h2>Homepage background</h2><p>Choose a personal image for your FocusBridge homepage. It stays stored locally in this extension.</p></div>
+      <div class="background-actions">
+        <label class="upload-button" for="homepage-background-input">Choose image</label>
+        <input id="homepage-background-input" type="file" accept="image/*" aria-label="Choose a homepage background image">
+        <button id="remove-homepage-background" class="text-button" type="button" hidden>Remove image</button>
+      </div>
+      <img id="homepage-background-preview" class="background-preview" alt="Selected homepage background preview" hidden>
+    </section>
     <section class="setting-row">
       <div><h2>Quick Tools</h2><p>Screenshot, calculator &amp; capture gallery on web pages</p></div>
       <label class="switch"><input id="tools-toggle" type="checkbox" aria-label="Enable Quick Tools"><span></span></label>
