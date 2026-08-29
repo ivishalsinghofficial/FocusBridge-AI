@@ -12,21 +12,44 @@
     <h1>FocusBridge Settings</h1>
     <section class="name-setting"><label for="name-input">Name <span>(optional)</span></label><input id="name-input" maxlength="60" placeholder="Used in your greeting"></section>
     <section class="setting-row">
-      <div><h2>FocusBridge Homepage</h2><p>Show your focused New Tab experience. Turn it off to open Google instead.</p></div>
+      <div><h2>FocusBridge Homepage</h2><p>Optional: turn this on to use FocusBridge as your focused New Tab experience. Leave it off to open Google instead.</p></div>
       <label class="switch"><input id="homepage-toggle" type="checkbox" aria-label="Enable FocusBridge Homepage"><span></span></label>
     </section>
     <section class="background-setting">
       <div><h2>Homepage background</h2><p>Choose a personal image for your FocusBridge homepage. It stays stored locally in this extension.</p></div>
       <div class="background-actions">
-        <label class="upload-button" for="homepage-background-input">Choose image</label>
+        <label class="upload-button" for="homepage-background-input"><span class="upload-plus" aria-hidden="true">+</span>Choose image</label>
         <input id="homepage-background-input" type="file" accept="image/*" aria-label="Choose a homepage background image">
         <button id="remove-homepage-background" class="text-button" type="button" hidden>Remove image</button>
       </div>
       <img id="homepage-background-preview" class="background-preview" alt="Selected homepage background preview" hidden>
     </section>
     <section class="setting-row">
-      <div><h2>Quick Tools</h2><p>Screenshot, calculator &amp; capture gallery on web pages</p></div>
-      <label class="switch"><input id="tools-toggle" type="checkbox" aria-label="Enable Quick Tools"><span></span></label>
+      <div><h2>Quick Tools</h2><p>Choose the tools shown on web pages.</p></div>
+    </section>
+    <section class="setting-row shortcut-setting tool-subsetting">
+      <div><h2>Screenshot</h2><p>Capture and crop an area on the current page.</p></div>
+      <label class="switch"><input id="screenshot-tool-toggle" type="checkbox" aria-label="Enable Screenshot"><span></span></label>
+    </section>
+    <section id="screenshot-hold-setting" class="setting-row shortcut-setting shortcut-child">
+      <div><h2>Screenshot shortcut</h2><p>Hold S for 2 seconds to start screenshot mode.</p></div>
+      <label class="switch"><input id="screenshot-hold-toggle" type="checkbox" aria-label="Enable Screenshot hold shortcut"><span></span></label>
+    </section>
+    <section class="setting-row shortcut-setting tool-subsetting">
+      <div><h2>Flynote</h2><p>Keep a persistent note on hand.</p></div>
+      <label class="switch"><input id="notepad-tool-toggle" type="checkbox" aria-label="Enable Notepad"><span></span></label>
+    </section>
+    <section id="notepad-hold-setting" class="setting-row shortcut-setting shortcut-child">
+      <div><h2>Flynote shortcut</h2><p>Hold N for 2 seconds to open Flynote.</p></div>
+      <label class="switch"><input id="notepad-hold-toggle" type="checkbox" aria-label="Enable Flynote hold shortcut"><span></span></label>
+    </section>
+    <section class="setting-row shortcut-setting tool-subsetting">
+      <div><h2>Unit Converter</h2><p>Convert units on the fly</p></div>
+      <label class="switch"><input id="unit-converter-tool-toggle" type="checkbox" aria-label="Enable Unit Converter"><span></span></label>
+    </section>
+    <section id="unit-converter-hold-setting" class="setting-row shortcut-setting shortcut-child">
+      <div><h2>Unit Converter shortcut</h2><p>Hold U for 2 seconds to open Unit Converter.</p></div>
+      <label class="switch"><input id="unit-converter-hold-toggle" type="checkbox" aria-label="Enable Unit Converter hold shortcut"><span></span></label>
     </section>
     <section class="setting-row">
       <div><h2>Nudge Buddy</h2><p>Show a friendly owl with a short encouragement when a focus nudge appears.</p></div>

@@ -23,7 +23,7 @@ Those providers process the request under their own terms and privacy policies. 
 
 ## Other network requests
 
-The local AI feature may download model files from Hugging Face and supporting WebAssembly files from jsDelivr. The extension may also retrieve focus quotes from The Quotes Hub. These requests are made directly from your browser to those services.
+The local AI feature may download model files from Hugging Face and supporting WebAssembly files from jsDelivr. Daily focus quotes are bundled with the extension and do not require a network request.
 
 ## Screenshots and clipboard
 

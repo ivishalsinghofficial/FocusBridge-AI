@@ -47,11 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeToggle = document.getElementById('themeToggle');
   const syncThemeToggleLabel = (isDark) => themeToggle.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
   chrome.storage.local.get(['theme'], (res) => {
-    if (res.theme === 'dark') {
-      document.body.classList.add('dark-mode');
-      themeToggle.checked = true;
-    }
-    syncThemeToggleLabel(themeToggle.checked);
+    const isDark = res.theme !== 'light';
+    document.body.classList.toggle('dark-mode', isDark);
+    themeToggle.checked = isDark;
+    syncThemeToggleLabel(isDark);
   });
 
   themeToggle.addEventListener('change', () => {
@@ -168,23 +167,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // J. What's New Banner
-  const whatsNewBanner = document.getElementById('whatsNewBanner');
-  const closeWhatsNew = document.getElementById('closeWhatsNew');
-
-  if (whatsNewBanner) {
-    chrome.storage.local.get(['whatsNewDismissed'], (res) => {
-      if (!res.whatsNewDismissed) {
-        whatsNewBanner.style.display = 'block';
+  // J. Permanent Homepage Banner
+  const homepageBanner = document.getElementById('homepageBanner');
+  if (homepageBanner) {
+    const openHomepageSettings = () => chrome.runtime.openOptionsPage();
+    homepageBanner.addEventListener('click', openHomepageSettings);
+    homepageBanner.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openHomepageSettings();
       }
     });
-
-    if (closeWhatsNew) {
-      closeWhatsNew.addEventListener('click', () => {
-        whatsNewBanner.style.display = 'none';
-        chrome.storage.local.set({ whatsNewDismissed: true });
-      });
-    }
+    homepageBanner.addEventListener('mouseenter', () => {
+      homepageBanner.style.transform = 'translateY(-1px)';
+      homepageBanner.style.boxShadow = 'inset 0 1px rgba(255,231,164,.2), 0 7px 18px rgba(0,0,0,.28)';
+    });
+    homepageBanner.addEventListener('mouseleave', () => {
+      homepageBanner.style.transform = '';
+      homepageBanner.style.boxShadow = '';
+    });
   }
 
   // Verify Button Listener

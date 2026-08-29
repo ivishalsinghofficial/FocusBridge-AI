@@ -28,7 +28,7 @@ function launchSimpleConfetti() {
     if (!document.getElementById('focus-boost-sticker-style')) {
         const style = document.createElement('style');
         style.id = 'focus-boost-sticker-style';
-        style.textContent = `@font-face { font-family:'Next Bravo'; src:url('${chrome.runtime.getURL('assets/fonts/Next Bravo.ttf')}') format('truetype'); font-display:swap; } @keyframes focusBoostSticker { 0% { opacity:0; transform:translateY(42px) scale(.84) rotate(-4deg); } 12% { opacity:1; transform:translateY(0) scale(1.04) rotate(0); } 68% { opacity:1; transform:translateY(-280px) scale(1); } 100% { opacity:0; transform:translateY(-520px) scale(.90); } }`;
+        style.textContent = `@font-face { font-family:'Next Bravo'; src:url('${chrome.runtime.getURL('assets/fonts/Next_Bravo.ttf')}') format('truetype'); font-display:swap; } @keyframes focusBoostSticker { 0% { opacity:0; transform:translateY(42px) scale(.84) rotate(-4deg); } 12% { opacity:1; transform:translateY(0) scale(1.04) rotate(0); } 68% { opacity:1; transform:translateY(-280px) scale(1); } 100% { opacity:0; transform:translateY(-520px) scale(.90); } }`;
         document.head.appendChild(style);
     }
     const sticker = document.createElement('div');

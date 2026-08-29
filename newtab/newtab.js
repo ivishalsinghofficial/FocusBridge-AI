@@ -20,7 +20,6 @@
   let homepageSessionActive = false;
   let checklistItems = [];
   const todayKey = () => new Date().toLocaleDateString('en-CA');
-  const QUOTE_ENDPOINT = 'https://thequoteshub.com/api/tags/motivation';
   // Aliases are search terms only; selections always persist the IANA name.
   const WORLD_TIMEZONES = [
     { zone: 'America/New_York', city: 'New York, USA', aliases: ['EST', 'EDT'], description: 'Eastern Time (New York, USA)' },
@@ -233,34 +232,10 @@
     return `“${quote.text}”${quote.author ? ` — ${quote.author}` : ''}`;
   }
 
-  function extractQuote(payload) {
-    const rawCollection = Array.isArray(payload) ? payload : (payload.quotes || payload.data || payload.results || payload);
-    const collection = Array.isArray(rawCollection) ? rawCollection : [rawCollection];
-    const candidate = collection[Math.floor(Math.random() * collection.length)];
-    const text = candidate?.quote || candidate?.text || candidate?.content || candidate?.body || candidate?.message;
-    const author = candidate?.author || candidate?.by || candidate?.authorName || '';
-    return typeof text === 'string' && text.trim() ? { text: text.trim(), author: String(author).trim() } : null;
-  }
-
-  async function loadDailyQuote(data) {
+  function loadDailyQuote() {
     const quoteEl = $('focus-stat');
-    const today = todayKey();
-    if (data.dailyMotivationQuoteDate === today && data.dailyMotivationQuote?.text) {
-      quoteEl.textContent = formatQuote(data.dailyMotivationQuote);
-      return;
-    }
-
-    try {
-      const response = await fetch(QUOTE_ENDPOINT, { headers: { Accept: 'application/json' } });
-      if (!response.ok) throw new Error(`Quote request failed: ${response.status}`);
-      const quote = extractQuote(await response.json());
-      if (!quote) throw new Error('Quote response did not contain readable text');
-      quoteEl.textContent = formatQuote(quote);
-      chrome.storage.local.set({ dailyMotivationQuote: quote, dailyMotivationQuoteDate: today });
-    } catch (error) {
-      console.warn('FocusBridge daily quote unavailable:', error);
-      quoteEl.textContent = 'Make the next minute count.';
-    }
+    const dayNumber = Math.floor(Date.now() / 86400000);
+    quoteEl.textContent = formatQuote({ text: DAILY_QUOTES[dayNumber % DAILY_QUOTES.length] });
   }
 
   function drawerSummary(history = {}) {
@@ -607,7 +582,7 @@
 
     updateClock();
     setInterval(updateClock, 1000);
-    chrome.storage.local.get(['theme', 'newtabAppearance', 'homepageBackground', 'homepageChecklist', 'userName', 'name', 'todaysGoal', 'todaysGoalDate', 'history', 'sessionActive', 'userGoal', 'pomoActive', 'workDuration', 'showHomepageShortcuts', 'dailyMotivationQuote', 'dailyMotivationQuoteDate', 'worldClockCities', 'leftWorldTimeZone', 'rightWorldTimeZone'], data => {
+    chrome.storage.local.get(['theme', 'newtabAppearance', 'homepageBackground', 'homepageChecklist', 'userName', 'name', 'todaysGoal', 'todaysGoalDate', 'history', 'sessionActive', 'userGoal', 'pomoActive', 'workDuration', 'showHomepageShortcuts', 'worldClockCities', 'leftWorldTimeZone', 'rightWorldTimeZone'], data => {
       initialise(data);
       document.documentElement.classList.add('focusbridge-ready');
     });
@@ -617,7 +592,7 @@
   // The native Chrome NTP cannot be restored by an installed override, but an
   // external Google page is a normal, permitted navigation target.
   chrome.storage.local.get('useFocusBridgeHomepage', ({ useFocusBridgeHomepage }) => {
-    if (useFocusBridgeHomepage === false) window.location.replace('https://www.google.com/');
+    if (useFocusBridgeHomepage !== true) window.location.replace('https://www.google.com/');
     else boot();
   });
 })();

@@ -11,17 +11,29 @@ let lastScore = 1.0;
 const SEMANTIC_TRIAGE_THRESHOLD = 0.32;
 const TRIAGE_CONTENT_DELAY_MS = 2800;
 const localDateKey = () => new Date().toLocaleDateString('en-CA');
-// Screenshot history has been retired; remove the old extension-only cache.
-indexedDB.deleteDatabase('focusbridge-captures');
 const CAPTURE_DB = 'focusbridge-captures';
 const CAPTURE_STORE = 'screenshots';
+const NOTE_STORE = 'notes';
+
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === chrome.runtime.OnInstalledReason.INSTALL || reason === chrome.runtime.OnInstalledReason.UPDATE) {
+    chrome.tabs.create({ url: chrome.runtime.getURL('whats-new.html') });
+  }
+});
 
 function captureDatabase() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(CAPTURE_DB, 1);
+    const request = indexedDB.open(CAPTURE_DB, 2);
     request.onupgradeneeded = () => {
-      const store = request.result.createObjectStore(CAPTURE_STORE, { keyPath: 'id', autoIncrement: true });
-      store.createIndex('timestamp', 'timestamp');
+      const db = request.result;
+      if (!db.objectStoreNames.contains(CAPTURE_STORE)) {
+        const store = db.createObjectStore(CAPTURE_STORE, { keyPath: 'id', autoIncrement: true });
+        store.createIndex('timestamp', 'timestamp');
+      }
+      if (!db.objectStoreNames.contains(NOTE_STORE)) {
+        const store = db.createObjectStore(NOTE_STORE, { keyPath: 'id', autoIncrement: true });
+        store.createIndex('updatedAt', 'updatedAt');
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -71,6 +83,26 @@ async function listCaptures() {
 
 async function deleteCapture(id) { const db = await captureDatabase(); await new Promise((resolve, reject) => { const request = db.transaction(CAPTURE_STORE, 'readwrite').objectStore(CAPTURE_STORE).delete(id); request.onsuccess = resolve; request.onerror = () => reject(request.error); }); db.close(); }
 
+async function listNotes() {
+  const db = await captureDatabase();
+  const notes = await new Promise((resolve, reject) => { const request = db.transaction(NOTE_STORE).objectStore(NOTE_STORE).getAll(); request.onsuccess = () => resolve(request.result.sort((a, b) => b.updatedAt - a.updatedAt)); request.onerror = () => reject(request.error); });
+  db.close(); return notes;
+}
+async function saveNote(note) {
+  const text = String(note.text || '');
+  if (text.length > 5000) throw new Error('Notes are limited to 5,000 characters.');
+  const db = await captureDatabase();
+  const saved = await new Promise((resolve, reject) => {
+    const store = db.transaction(NOTE_STORE, 'readwrite').objectStore(NOTE_STORE);
+    const isExistingNote = Boolean(note.id);
+    const record = { id: note.id || (crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`), text, createdAt: note.createdAt || Date.now(), updatedAt: Date.now() };
+    const request = isExistingNote ? store.put(record) : store.add(record);
+    request.onsuccess = () => { record.id = request.result; resolve(record); }; request.onerror = () => reject(request.error);
+  });
+  db.close(); return saved;
+}
+async function deleteNote(id) { const db = await captureDatabase(); await new Promise((resolve, reject) => { const request = db.transaction(NOTE_STORE, 'readwrite').objectStore(NOTE_STORE).delete(id); request.onsuccess = resolve; request.onerror = () => reject(request.error); }); db.close(); }
+
 // 1. Navigation Monitor
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' || changeInfo.title) {
@@ -117,6 +149,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // 2. MASTER MESSAGE LISTENER (Consolidated)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'listNotes') { listNotes().then(notes => sendResponse({ success: true, notes })).catch(error => sendResponse({ success: false, error: error.message })); return true; }
+  if (message.action === 'saveNote') { saveNote(message.note || {}).then(note => sendResponse({ success: true, note })).catch(error => sendResponse({ success: false, error: error.message })); return true; }
+  if (message.action === 'deleteNote') { deleteNote(message.id).then(() => sendResponse({ success: true })).catch(error => sendResponse({ success: false, error: error.message })); return true; }
   if (message.action === "captureVisibleScreenshot") {
     (async () => {
       try {

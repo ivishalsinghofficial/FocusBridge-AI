@@ -1,4 +1,9 @@
-const toolsToggle = document.getElementById('tools-toggle');
+const screenshotToolToggle = document.getElementById('screenshot-tool-toggle');
+const screenshotHoldToggle = document.getElementById('screenshot-hold-toggle');
+const notepadToolToggle = document.getElementById('notepad-tool-toggle');
+const notepadHoldToggle = document.getElementById('notepad-hold-toggle');
+const unitConverterToolToggle = document.getElementById('unit-converter-tool-toggle');
+const unitConverterHoldToggle = document.getElementById('unit-converter-hold-toggle');
 const homepageToggle = document.getElementById('homepage-toggle');
 const nudgeEffectToggle = document.getElementById('nudge-effect-toggle');
 const boostStickersToggle = document.getElementById('boost-stickers-toggle');
@@ -16,9 +21,15 @@ function showHomepageBackground(dataUrl) {
   if (hasBackground) homepageBackgroundPreview.src = dataUrl;
 }
 
-chrome.storage.local.get(['useFocusBridgeHomepage', 'toolsDockEnabled', 'nudgeBuddyEnabled', 'nudgeTearEffect', 'boostStickersEnabled', 'userName', 'homepageBackground'], data => {
-  homepageToggle.checked = data.useFocusBridgeHomepage !== false;
-  toolsToggle.checked = data.toolsDockEnabled !== false;
+chrome.storage.local.get(['useFocusBridgeHomepage', 'screenshotToolEnabled', 'screenshotHoldEnabled', 'notepadToolEnabled', 'notepadHoldEnabled', 'unitConverterToolEnabled', 'unitConverterHoldEnabled', 'nudgeBuddyEnabled', 'nudgeTearEffect', 'boostStickersEnabled', 'userName', 'homepageBackground'], data => {
+  homepageToggle.checked = data.useFocusBridgeHomepage === true;
+  screenshotToolToggle.checked = data.screenshotToolEnabled === true;
+  screenshotHoldToggle.checked = data.screenshotHoldEnabled === true;
+  notepadToolToggle.checked = data.notepadToolEnabled === true;
+  notepadHoldToggle.checked = data.notepadHoldEnabled === true;
+  unitConverterToolToggle.checked = data.unitConverterToolEnabled === true;
+  unitConverterHoldToggle.checked = data.unitConverterHoldEnabled === true;
+  syncToolSubtoggles();
   nudgeEffectToggle.checked = data.nudgeBuddyEnabled ?? !!data.nudgeTearEffect;
   boostStickersToggle.checked = data.boostStickersEnabled !== false;
   nameInput.value = data.userName || '';
@@ -32,11 +43,22 @@ function persist(values) {
   });
 }
 
-toolsToggle.addEventListener('change', () => persist({ toolsDockEnabled: toolsToggle.checked }));
+screenshotToolToggle.addEventListener('change', () => { persist({ screenshotToolEnabled: screenshotToolToggle.checked }); syncToolSubtoggles(); });
+screenshotHoldToggle.addEventListener('change', () => persist({ screenshotHoldEnabled: screenshotHoldToggle.checked }));
+notepadToolToggle.addEventListener('change', () => { persist({ notepadToolEnabled: notepadToolToggle.checked }); syncToolSubtoggles(); });
+notepadHoldToggle.addEventListener('change', () => persist({ notepadHoldEnabled: notepadHoldToggle.checked }));
+unitConverterToolToggle.addEventListener('change', () => { persist({ unitConverterToolEnabled: unitConverterToolToggle.checked }); syncToolSubtoggles(); });
+unitConverterHoldToggle.addEventListener('change', () => persist({ unitConverterHoldEnabled: unitConverterHoldToggle.checked }));
 homepageToggle.addEventListener('change', () => persist({ useFocusBridgeHomepage: homepageToggle.checked }));
 nudgeEffectToggle.addEventListener('change', () => persist({ nudgeBuddyEnabled: nudgeEffectToggle.checked }));
 boostStickersToggle.addEventListener('change', () => persist({ boostStickersEnabled: boostStickersToggle.checked }));
 nameInput.addEventListener('change', () => persist({ userName: nameInput.value.trim() }));
+
+function syncToolSubtoggles() {
+  [['screenshot-hold-setting', screenshotHoldToggle, screenshotToolToggle], ['notepad-hold-setting', notepadHoldToggle, notepadToolToggle], ['unit-converter-hold-setting', unitConverterHoldToggle, unitConverterToolToggle]].forEach(([id, toggle, parent]) => {
+    const row = document.getElementById(id); row.hidden = !parent.checked; toggle.disabled = !parent.checked;
+  });
+}
 
 function resizeBackground(dataUrl) {
   return new Promise((resolve, reject) => {
