@@ -4,6 +4,7 @@ const notepadToolToggle = document.getElementById('notepad-tool-toggle');
 const notepadHoldToggle = document.getElementById('notepad-hold-toggle');
 const unitConverterToolToggle = document.getElementById('unit-converter-tool-toggle');
 const unitConverterHoldToggle = document.getElementById('unit-converter-hold-toggle');
+const attentionCheckToggle = document.getElementById('attention-check-toggle');
 const homepageToggle = document.getElementById('homepage-toggle');
 const nudgeEffectToggle = document.getElementById('nudge-effect-toggle');
 const boostStickersToggle = document.getElementById('boost-stickers-toggle');
@@ -21,7 +22,7 @@ function showHomepageBackground(dataUrl) {
   if (hasBackground) homepageBackgroundPreview.src = dataUrl;
 }
 
-chrome.storage.local.get(['useFocusBridgeHomepage', 'screenshotToolEnabled', 'screenshotHoldEnabled', 'notepadToolEnabled', 'notepadHoldEnabled', 'unitConverterToolEnabled', 'unitConverterHoldEnabled', 'nudgeBuddyEnabled', 'nudgeTearEffect', 'boostStickersEnabled', 'userName', 'homepageBackground'], data => {
+chrome.storage.local.get(['useFocusBridgeHomepage', 'screenshotToolEnabled', 'screenshotHoldEnabled', 'notepadToolEnabled', 'notepadHoldEnabled', 'unitConverterToolEnabled', 'unitConverterHoldEnabled', 'attentionCheckEnabled', 'nudgeBuddyEnabled', 'nudgeTearEffect', 'boostStickersEnabled', 'userName', 'homepageBackground'], data => {
   homepageToggle.checked = data.useFocusBridgeHomepage === true;
   screenshotToolToggle.checked = data.screenshotToolEnabled === true;
   screenshotHoldToggle.checked = data.screenshotHoldEnabled === true;
@@ -29,6 +30,7 @@ chrome.storage.local.get(['useFocusBridgeHomepage', 'screenshotToolEnabled', 'sc
   notepadHoldToggle.checked = data.notepadHoldEnabled === true;
   unitConverterToolToggle.checked = data.unitConverterToolEnabled === true;
   unitConverterHoldToggle.checked = data.unitConverterHoldEnabled === true;
+  attentionCheckToggle.checked = data.attentionCheckEnabled === true;
   syncToolSubtoggles();
   nudgeEffectToggle.checked = data.nudgeBuddyEnabled ?? !!data.nudgeTearEffect;
   boostStickersToggle.checked = data.boostStickersEnabled !== false;
@@ -49,6 +51,7 @@ notepadToolToggle.addEventListener('change', () => { persist({ notepadToolEnable
 notepadHoldToggle.addEventListener('change', () => persist({ notepadHoldEnabled: notepadHoldToggle.checked }));
 unitConverterToolToggle.addEventListener('change', () => { persist({ unitConverterToolEnabled: unitConverterToolToggle.checked }); syncToolSubtoggles(); });
 unitConverterHoldToggle.addEventListener('change', () => persist({ unitConverterHoldEnabled: unitConverterHoldToggle.checked }));
+attentionCheckToggle.addEventListener('change', () => persist({ attentionCheckEnabled: attentionCheckToggle.checked }));
 homepageToggle.addEventListener('change', () => persist({ useFocusBridgeHomepage: homepageToggle.checked }));
 nudgeEffectToggle.addEventListener('change', () => persist({ nudgeBuddyEnabled: nudgeEffectToggle.checked }));
 boostStickersToggle.addEventListener('change', () => persist({ boostStickersEnabled: boostStickersToggle.checked }));

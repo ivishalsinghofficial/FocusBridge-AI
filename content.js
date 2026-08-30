@@ -12,10 +12,11 @@ let nudgeBuddyMessagePool = {};
 let boostStickersEnabled = true;
 let pomoWasActive = false;
 let screenshotHoldEnabled = false;
-let toolsDockEnabled = true;
 let screenshotToolEnabled = false;
 let notepadToolEnabled = false;
 let unitConverterToolEnabled = false;
+let attentionCheckEnabled = false;
+let cleanupToolsDock = null;
 let notepadHoldEnabled = false;
 let unitConverterHoldEnabled = false;
 let nextBravoFontPromise = null;
@@ -32,6 +33,14 @@ function isValid() {
   return typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
 }
 
+function ensureAttentionCheckAnimation() {
+  if (document.getElementById('focusbridge-attention-animation')) return;
+  const style = document.createElement('style');
+  style.id = 'focusbridge-attention-animation';
+  style.textContent = '@keyframes focusbridgeAttentionIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}';
+  document.documentElement.appendChild(style);
+}
+
 function renderGlobalToolsDock() {
   if (!isValid() || document.getElementById('focusbridge-global-tools-root')) return;
   const host = document.createElement('div');
@@ -41,7 +50,7 @@ function renderGlobalToolsDock() {
   shadow.innerHTML = [
     '<style>',
     '*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}',
-    '#rail{position:fixed;right:-9px;top:50%;transform:translateY(-50%);display:grid;gap:7px}.tool-bubble{appearance:none;display:grid;place-items:center;width:35px;height:32px;border:1px solid rgba(255,255,255,.22);border-radius:999px 0 0 999px;background:rgba(16,17,20,.86);color:#e8c56e;padding:0 9px 0 4px;cursor:pointer;box-shadow:0 9px 21px rgba(0,0,0,.25);font-size:12px;font-weight:700;transition:transform .18s ease,background .2s ease}.tool-bubble svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.tool-bubble:hover{transform:translateX(-3px);background:rgba(43,39,31,.96)}',
+    '#rail{position:fixed;right:-9px;bottom:180px;display:grid;gap:7px}.tool-bubble{appearance:none;display:grid;place-items:center;width:35px;height:32px;border:1px solid rgba(255,255,255,.22);border-radius:999px 0 0 999px;background:rgba(16,17,20,.86);color:#e8c56e;padding:0 9px 0 4px;cursor:pointer;box-shadow:0 9px 21px rgba(0,0,0,.25);font-size:12px;font-weight:700;transition:transform .18s ease,background .2s ease}.tool-bubble svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.tool-bubble:hover{transform:translateX(-3px);background:rgba(43,39,31,.96)}.tool-bubble.attention-active{--attention-background:rgba(109,82,24,.98);--attention-border:rgba(255,224,135,.8);--attention-color:#ffe09a;--attention-glow:rgba(232,197,110,.16);background:var(--attention-background);border-color:var(--attention-border);color:var(--attention-color);animation:attentionPulse 1.8s ease-in-out infinite}.tool-bubble.attention-score-green{--attention-background:rgba(26,61,26,.98);--attention-border:rgba(128,255,128,.88);--attention-color:#b8ffb8;--attention-glow:rgba(128,255,128,.2)}.tool-bubble.attention-score-red{--attention-background:rgba(61,26,26,.98);--attention-border:rgba(255,128,128,.88);--attention-color:#ffb3b3;--attention-glow:rgba(255,128,128,.2)}@keyframes attentionPulse{50%{box-shadow:0 0 0 5px var(--attention-glow),0 9px 21px rgba(0,0,0,.25)}}',
     '#panel,#tool-panel{position:fixed;right:14px;top:50%;width:280px;transform:translate(110%,-50%);padding:16px;color:#f6f3ec;background:rgba(17,18,21,.94);border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:-18px 16px 42px rgba(0,0,0,.34);backdrop-filter:blur(18px);transition:transform .24s cubic-bezier(.2,.8,.2,1)}#panel.open,#tool-panel.open{transform:translate(-68px,-50%)}#tool-panel{display:none;max-height:76vh;overflow:auto}.tool-row{display:flex;gap:7px;align-items:center}.tool-row input,.tool-row select,.tool-textarea{width:100%;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(0,0,0,.22);color:#fff;padding:9px;font:12px inherit}.tool-row select{color-scheme:dark}.tool-row select option{background:#17181c;color:#f6f3ec}.tool-textarea{height:116px;resize:vertical}.tool-button{appearance:none;border:1px solid rgba(232,197,110,.38);border-radius:8px;background:rgba(215,180,90,.12);color:#f1d58c;padding:7px 9px;cursor:pointer;font:600 12px inherit}.note-list{display:grid;gap:5px;margin-top:9px;max-height:220px;overflow:auto}.note-item{display:flex;gap:6px;align-items:center;width:100%;text-align:left;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:#f6f3ec;padding:7px;cursor:pointer}.note-copy{min-width:0;flex:1}.note-preview{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.note-time{color:#cfc8bb;font-size:10px;margin-top:3px}.note-delete{border:0;background:transparent;color:#d9ae70;cursor:pointer;font-size:16px}.tool-caption{margin:7px 0;color:#cfc8bb;font-size:11px}.tool-tabs{display:flex;gap:5px;margin:9px 0}.tool-tabs button{flex:1}.converter-value{font-size:20px;font-weight:700;color:#f1d58c;text-align:center;margin:11px 0}#tool-panel.notepad-panel{width:min(410px,calc(100vw - 94px));height:min(530px,76vh);padding:22px;overflow:hidden;background:linear-gradient(145deg,rgba(31,29,24,.97),rgba(15,16,19,.97))}#tool-panel.notepad-panel .head{margin-bottom:17px}#tool-panel.notepad-panel .tool-row{margin-bottom:13px}#tool-panel.notepad-panel .tool-textarea{height:245px;resize:none;padding:14px;line-height:26px;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.025) 0,rgba(255,255,255,.025) 25px,rgba(232,197,110,.09) 26px),rgba(32,29,23,.78);border-color:rgba(232,197,110,.27);font-size:14px}#tool-panel.notepad-panel .note-list{max-height:132px;margin-top:10px;padding-right:3px}#tool-panel.notepad-panel .tool-caption{margin:9px 0}#tool-panel.notepad-panel .note-item{padding:9px;background:rgba(255,255,255,.055)}',
     '#tool-panel.notepad-panel{display:flex;flex-direction:column;height:min(580px,82vh)}#tool-panel.notepad-panel .note-actions{margin-bottom:14px}#tool-panel.notepad-panel #clear-note{position:absolute;right:22px;bottom:22px;padding:6px 9px;font-size:11px;background:rgba(215,180,90,.1)}#tool-panel.notepad-panel .note-tab{background:transparent;border-color:transparent;color:#cfc8bb}#tool-panel.notepad-panel .note-tab.active,#tool-panel.notepad-panel #save-note{background:#d7b45a;color:#17140c;border-color:#e8c56e}#tool-panel.notepad-panel .note-view{min-height:0;flex:1;display:flex;flex-direction:column;padding-bottom:32px}#tool-panel.notepad-panel .note-view[hidden]{display:none}#tool-panel.notepad-panel .tool-textarea{height:330px!important;min-height:330px;flex:1;margin:0}#tool-panel.notepad-panel .note-save-row{margin:10px 0 0;justify-content:space-between}#tool-panel.notepad-panel #note-history{gap:10px}#tool-panel.notepad-panel #note-history #note-search{flex:0 0 auto}#tool-panel.notepad-panel #note-history .note-list{max-height:none;flex:1;margin:0;padding-right:3px}#tool-panel.notepad-panel .note-delete{opacity:0}.note-item:hover .note-delete{opacity:1}',
     '.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}#close{appearance:none;border:0;background:transparent;color:#f6f3ec;cursor:pointer;font-size:21px;line-height:1;padding:0 2px}',
@@ -63,6 +72,8 @@ function renderGlobalToolsDock() {
   };
   const notepadButton = notepadToolEnabled ? addToolBubble('notepad', 'Notepad', '<path d="M5 3h12a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2V3Z"/><path d="M8 7h7M8 11h7M8 15h4M16 17l3-3"/>') : null;
   const converterButton = unitConverterToolEnabled ? addToolBubble('converter', 'Unit converter', '<path d="M4 7h16M7 4v6M17 4v6M4 17h16M7 14v6M17 14v6"/>') : null;
+  const attentionButton = attentionCheckEnabled ? addToolBubble('attention-check', 'Start attention check', '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.8"/>') : null;
+  console.debug('FocusBridge attention check dock state', { attentionCheckEnabled, rendered: !!attentionButton });
   if (!screenshotToolEnabled) shadow.querySelector('#screenshot').remove();
   const calculatorLaunch = shadow.querySelector('#calculator-launch');
   const display = shadow.querySelector('#display');
@@ -116,6 +127,102 @@ function renderGlobalToolsDock() {
   };
   notepadButton?.addEventListener('click', openNotepad);
   converterButton?.addEventListener('click', openConverter);
+  let attentionActive = false;
+  let attentionSchedule = null;
+  let attentionResponseTimer = null;
+  let attentionBadge = null;
+  let attentionExpectedKey = '';
+  let attentionShown = 0;
+  let attentionHits = 0;
+  let lastAttentionBadgePosition = null;
+  const attentionKeys = ['Q', 'X', 'Z', 'W', 'R', 'Y', 'U', 'O', 'P', 'G', 'H', 'N', 'V'];
+  const updateAttentionBubbleScore = () => {
+    const scoreTheme = attentionShown < 4 ? 'default' : attentionHits / attentionShown >= .7 ? 'green' : 'red';
+    attentionButton?.classList.toggle('attention-score-green', scoreTheme === 'green');
+    attentionButton?.classList.toggle('attention-score-red', scoreTheme === 'red');
+    console.debug('FocusBridge attention check score', { hits: attentionHits, totalShown: attentionShown, theme: scoreTheme });
+  };
+  const getAttentionBadgePosition = () => {
+    const badgeSize = 46;
+    const maxViewportX = Math.max(0, window.innerWidth - badgeSize);
+    const maxViewportY = Math.max(0, window.innerHeight - badgeSize);
+    const minX = Math.min(maxViewportX, Math.ceil(window.innerWidth * .2));
+    const maxX = Math.max(minX, Math.min(maxViewportX, Math.floor(window.innerWidth * .8 - badgeSize)));
+    const minY = Math.min(maxViewportY, Math.ceil(window.innerHeight * .15));
+    const maxY = Math.max(minY, Math.min(maxViewportY, Math.floor(window.innerHeight * .75 - badgeSize)));
+    let position;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      position = { x: minX + Math.floor(Math.random() * (maxX - minX + 1)), y: minY + Math.floor(Math.random() * (maxY - minY + 1)) };
+      if (!lastAttentionBadgePosition || position.x !== lastAttentionBadgePosition.x || position.y !== lastAttentionBadgePosition.y) break;
+    }
+    lastAttentionBadgePosition = position;
+    return position;
+  };
+  const clearAttentionChallenge = () => {
+    if (attentionResponseTimer) clearTimeout(attentionResponseTimer);
+    attentionResponseTimer = null;
+    attentionExpectedKey = '';
+    attentionBadge?.remove();
+    attentionBadge = null;
+  };
+  const stopAttentionSession = () => {
+    if (!attentionActive) return;
+    attentionActive = false;
+    if (attentionSchedule) clearTimeout(attentionSchedule);
+    attentionSchedule = null;
+    clearAttentionChallenge();
+    attentionButton?.classList.remove('attention-active');
+    attentionButton?.classList.remove('attention-score-green', 'attention-score-red');
+    attentionButton?.setAttribute('aria-pressed', 'false');
+    attentionButton?.setAttribute('aria-label', 'Start attention check');
+  };
+  const scheduleAttentionChallenge = () => {
+    if (!attentionActive) return;
+    const attentionDelayMs = 90000 + Math.floor(Math.random() * 60001);
+    console.debug('FocusBridge attention check scheduled', { delaySeconds: attentionDelayMs / 1000 });
+    attentionSchedule = setTimeout(() => {
+      if (!attentionActive) return;
+      attentionExpectedKey = attentionKeys[Math.floor(Math.random() * attentionKeys.length)];
+      const badgePosition = getAttentionBadgePosition();
+      ensureAttentionCheckAnimation();
+      attentionBadge = document.createElement('div');
+      attentionBadge.textContent = attentionExpectedKey;
+      attentionBadge.setAttribute('role', 'status');
+      attentionBadge.setAttribute('aria-label', `Press ${attentionExpectedKey}`);
+      attentionBadge.style.cssText = `position:fixed;left:${badgePosition.x}px;top:${badgePosition.y}px;z-index:2147483647;display:grid;place-items:center;box-sizing:border-box;width:46px;height:46px;border:1px solid rgba(255,220,125,.8);border-radius:8px;background:rgba(17,18,21,.96);box-shadow:0 10px 28px rgba(0,0,0,.3);color:#ffe09a;font:700 22px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;pointer-events:none;animation:focusbridgeAttentionIn .18s ease-out;`;
+      console.debug('FocusBridge attention check challenge shown', badgePosition);
+      (document.fullscreenElement || document.documentElement).appendChild(attentionBadge);
+      attentionResponseTimer = setTimeout(() => {
+        if (!attentionActive || !attentionExpectedKey) return;
+        attentionShown += 1;
+        updateAttentionBubbleScore();
+        clearAttentionChallenge();
+        scheduleAttentionChallenge();
+      }, 2500);
+    }, attentionDelayMs);
+  };
+  const onAttentionKeydown = event => {
+    if (!attentionActive || !attentionExpectedKey || isTextEntryActive()) return;
+    if (event.key.toUpperCase() !== attentionExpectedKey) return;
+    attentionHits += 1;
+    attentionShown += 1;
+    updateAttentionBubbleScore();
+    clearAttentionChallenge();
+    scheduleAttentionChallenge();
+  };
+  document.addEventListener('keydown', onAttentionKeydown, true);
+  attentionButton?.addEventListener('click', () => {
+    if (attentionActive) { console.debug('FocusBridge attention check stopped', { hits: attentionHits, totalShown: attentionShown }); stopAttentionSession(); return; }
+    attentionActive = true;
+    attentionShown = 0;
+    attentionHits = 0;
+    attentionButton.classList.remove('attention-score-green', 'attention-score-red');
+    attentionButton.classList.add('attention-active');
+    attentionButton.setAttribute('aria-pressed', 'true');
+    attentionButton.setAttribute('aria-label', 'Stop attention check');
+    console.debug('FocusBridge attention check started');
+    scheduleAttentionChallenge();
+  });
   shadow.querySelector('#history').addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'listCaptures' }, ({ captures: focusbridgeCaptureHistory = [] } = {}) => {
       console.debug(`FocusBridge IndexedDB captures (${focusbridgeCaptureHistory.length}):`, focusbridgeCaptureHistory);
@@ -338,7 +445,22 @@ function renderGlobalToolsDock() {
   registerHoldToOpenShortcut('s', openScreenshotCapture, () => screenshotToolEnabled && screenshotHoldEnabled);
   registerHoldToOpenShortcut('n', openNotepad, () => notepadToolEnabled && notepadHoldEnabled);
   registerHoldToOpenShortcut('u', openConverter, () => unitConverterToolEnabled && unitConverterHoldEnabled);
-  (document.documentElement || document.body).appendChild(host);
+  const dockHomeParent = document.documentElement || document.body;
+  const moveDockForFullscreen = () => {
+    const fullscreenTarget = document.fullscreenElement;
+    const destination = fullscreenTarget || dockHomeParent;
+    if (destination && host.parentNode !== destination) destination.appendChild(host);
+    if (attentionBadge && destination && attentionBadge.parentNode !== destination) destination.appendChild(attentionBadge);
+  };
+  dockHomeParent.appendChild(host);
+  document.addEventListener('fullscreenchange', moveDockForFullscreen);
+  moveDockForFullscreen();
+  cleanupToolsDock = () => {
+    stopAttentionSession();
+    document.removeEventListener('keydown', onAttentionKeydown, true);
+    document.removeEventListener('fullscreenchange', moveDockForFullscreen);
+    cleanupToolsDock = null;
+  };
 }
 
 // 1. SELF-HEALING BODYGUARD
@@ -1641,16 +1763,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // 9. INITIAL LOAD
-chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive', 'screenshotToolEnabled', 'screenshotHoldEnabled', 'notepadToolEnabled', 'notepadHoldEnabled', 'unitConverterToolEnabled', 'unitConverterHoldEnabled', 'theme', 'nudgeBuddyEnabled', 'boostStickersEnabled', 'userName'], (res) => {
+chrome.storage.local.get(['sessionActive', 'userGoal', 'recallActive', 'screenshotToolEnabled', 'screenshotHoldEnabled', 'notepadToolEnabled', 'notepadHoldEnabled', 'unitConverterToolEnabled', 'unitConverterHoldEnabled', 'attentionCheckEnabled', 'theme', 'nudgeBuddyEnabled', 'boostStickersEnabled', 'userName'], (res) => {
   if (!isValid()) return;
   currentTheme = res.theme !== 'light' ? 'dark' : 'light';
   nudgeBuddyEnabled = !!res.nudgeBuddyEnabled;
   boostStickersEnabled = res.boostStickersEnabled !== false;
   screenshotHoldEnabled = res.screenshotHoldEnabled === true;
-  toolsDockEnabled = true;
   screenshotToolEnabled = res.screenshotToolEnabled === true;
   notepadToolEnabled = res.notepadToolEnabled === true;
   unitConverterToolEnabled = res.unitConverterToolEnabled === true;
+  attentionCheckEnabled = res.attentionCheckEnabled === true;
   notepadHoldEnabled = res.notepadHoldEnabled === true;
   unitConverterHoldEnabled = res.unitConverterHoldEnabled === true;
   focusUserName = (res.userName || '').trim();
@@ -1696,6 +1818,7 @@ chrome.storage.onChanged.addListener((changes) => {
   if (changes.screenshotToolEnabled) screenshotToolEnabled = changes.screenshotToolEnabled.newValue === true;
   if (changes.notepadToolEnabled) notepadToolEnabled = changes.notepadToolEnabled.newValue === true;
   if (changes.unitConverterToolEnabled) unitConverterToolEnabled = changes.unitConverterToolEnabled.newValue === true;
+  if (changes.attentionCheckEnabled) attentionCheckEnabled = changes.attentionCheckEnabled.newValue === true;
   if (changes.notepadHoldEnabled) notepadHoldEnabled = changes.notepadHoldEnabled.newValue === true;
   if (changes.unitConverterHoldEnabled) unitConverterHoldEnabled = changes.unitConverterHoldEnabled.newValue === true;
   if (changes.userName) focusUserName = (changes.userName.newValue || '').trim();
@@ -1775,11 +1898,13 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 chrome.storage.onChanged.addListener(changes => {
-  if (!changes.screenshotToolEnabled && !changes.notepadToolEnabled && !changes.unitConverterToolEnabled) return;
+  if (!changes.screenshotToolEnabled && !changes.notepadToolEnabled && !changes.unitConverterToolEnabled && !changes.attentionCheckEnabled) return;
   const dock = document.getElementById('focusbridge-global-tools-root');
   if (changes.screenshotToolEnabled) screenshotToolEnabled = changes.screenshotToolEnabled.newValue === true;
   if (changes.notepadToolEnabled) notepadToolEnabled = changes.notepadToolEnabled.newValue === true;
   if (changes.unitConverterToolEnabled) unitConverterToolEnabled = changes.unitConverterToolEnabled.newValue === true;
+  if (changes.attentionCheckEnabled) attentionCheckEnabled = changes.attentionCheckEnabled.newValue === true;
+  cleanupToolsDock?.();
   dock?.remove();
-  if (toolsDockEnabled && isValid()) renderGlobalToolsDock();
+  if (isValid()) renderGlobalToolsDock();
 });
