@@ -1,51 +1,81 @@
-# Privacy Policy for FocusBridge AI
 
-**Last Updated: December 2025**
+# FocusBridge AI 🎯
 
-FocusBridge AI is built with a privacy-first philosophy. We believe that your browsing habits are private, and our goal is to help you stay focused without compromising your security.
+### *The Privacy-First, Mindful Productivity Engine for Modern Browsers*
 
-## 1. Why we request "Broad Host Permissions" (<all_urls>)
-When you install FocusBridge AI, you will see a notice saying the extension can "read and change data on all websites." 
+[![Manifest V3](https://img.shields.io/badge/Chrome-Manifest_V3-orange.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![Local AI](https://img.shields.io/badge/AI-Transformers.js-blue.svg)](https://github.com/xenova/transformers.js)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**We require this for one specific reason:**
-To provide the **"Smart Nudge"** feature. Because you might use any website for your work (from specialized research portals to common tools), the extension needs to be able to verify if your *current* tab matches your *current* goal. 
+**FocusBridge AI** is not just another site blocker. It is a cognitive safety net designed to bridge the gap between your **intentions** and your **actions**. By leveraging on-device Small Language Models (SLMs), it understands the *context* of your browsing habits and provides "Soft Friction" to keep you aligned with your goals.
 
-Without this permission, the AI would be "blind" and could not nudge you when you wander onto a distracting site.
+### Download
 
-## 2. On-Device AI (Zero Data Collection)
-Unlike many other AI tools, FocusBridge AI does **not** send your data to the cloud.
-- **Local Analysis:** 100% of the analysis is performed on your own computer using Transformers.js. 
-- **No External APIs:** We do not use OpenAI, Google Gemini, or any other cloud-based AI. 
-- **Offline First:** Your goals, sub-tasks, and browsing context never leave your machine.
+<a href="https://chromewebstore.google.com/search/FocusBridge%20AI%3A%20Smart%20Nudge%20for%20ADHD%20%26%20Deep%20Work">
+  <img src="https://developer.chrome.com/static/docs/webstore/branding/image/UV4C4ybeBTsZt43U4xis.png" alt="Available in the Chrome Web Store" height="60">
+</a>
 
-## 3. Data Storage
-- **Local Storage:** Your focus history, goals, and rules are stored strictly in your browser's local storage.
-- **No Tracking:** We do not use any analytics, tracking pixels, or third-party monitoring scripts.
+<div style="font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, sans-serif; border: 1px solid rgb(224, 224, 224); border-radius: 12px; padding: 20px; max-width: 500px; background: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.05) 0px 2px 8px;"><div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;"><img alt="FocusBridge AI" src="https://ph-files.imgix.net/d23a868a-d2f3-4594-8713-6833ac8cb33d.png?auto=format&amp;fit=crop&amp;w=80&amp;h=80" style="width: 64px; height: 64px; border-radius: 8px; object-fit: cover; flex-shrink: 0;"><div style="flex: 1 1 0%; min-width: 0px;"><h3 style="margin: 0px; font-size: 18px; font-weight: 600; color: rgb(26, 26, 26); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">FocusBridge AI</h3><p style="margin: 4px 0px 0px; font-size: 14px; color: rgb(102, 102, 102); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">Smart Nudge for ADHD &amp; Deep Work</p></div></div><a href="https://www.producthunt.com/products/focusbridge-ai?embed=true&amp;utm_source=embed&amp;utm_medium=post_embed" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 4px; margin-top: 12px; padding: 8px 16px; background: rgb(255, 97, 84); color: rgb(255, 255, 255); text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600;">Check it out on Product Hunt →</a></div>
 
-## 4. Third-Party Sharing
-We do not sell, trade, or share your information. Period.
+---
 
-## 5. Open Source Transparency
-As an open-source project, our code is fully auditable. You can verify exactly how we handle your data by visiting our [GitHub Repository](https://github.com/ivishalsinghofficial/FocusBridge-AI).
+## 🚀 The Problem
+Most productivity tools are binary: they either block a site or they don't. This creates "Reactance," where users feel restricted and eventually disable the tool. **FocusBridge AI** solves this through **Mindful Friction**—forcing a 10-second conscious pause only when your current tab deviates from your stated goal.
 
-Since you’ve added the **BYOK (Bring Your Own Key)** feature for Gemini and ChatGPT, your `PRIVACY.md` needs to clearly explain that while some data now travels to Google or OpenAI, it is **completely under the user's control** and never touches your servers.
+## ✨ Key Features
 
-Here is the professional text to add to your `PRIVACY.md`. I’ve organized it into a "What stays local" vs "What goes to AI" format, which builds massive trust.
+### 🧠 Semantic Intent Analysis
+Uses **Transformers.js** to run a local `all-MiniLM-L6-v2` model. It performs real-time Cosine Similarity checks between your goal and the content of the active tab. It understands that "Space Research" is relevant to NASA, but "Cat Memes" on Reddit is a distraction.
 
-***
+### 🛡️ The "Buddy" Intervention
+When a distraction is detected on a restricted domain, a full-screen **Mindful Overlay** appears. 
+- **The Forced Pause:** A 10-second timer disables the "Access Site" button, forcing your brain to switch from impulsive browsing to rational decision-making.
+- **Hero Rewards:** Choosing to "Get Back to Work" triggers an explosive particle celebration—rewarding self-discipline with dopamine.
 
-## 6. Remote AI Features (Recall Anchor)
-Version 1.0.1 introduces an optional **Recall Anchor** feature. This allows you to use high-fidelity Multiple Choice Questions (MCQs) to verify your focus.
+### 🫧 Fluid Focus Bubble
+A draggable, hardware-accelerated floating UI that lives on your screen.
+- **Dynamic States:** Collapses into a minimalist Pomodoro progress ring on safe sites; auto-expands into a high-contrast Goal Card on distracting sites.
+- **Edge-Snapping:** Intelligently snaps to the edges of your viewport and hides 50% of its body to stay out of your workspace.
 
-### Bring Your Own Key (BYOK) Model
-- **Local Key Storage:** If you choose to use Gemini Pro or ChatGPT, your API keys are stored strictly within your browser's secure local storage (`chrome.storage.local`). The developer of FocusBridge AI has **zero access** to these keys.
-- **Direct Communication:** When a quiz is generated, the extension sends a text snippet from your active tab directly to the official Google (Gemini) or OpenAI (ChatGPT) endpoints. No intermediary servers are used.
-- **Data Usage:** These snippets are used only for a one-time prompt generation. We recommend reviewing the privacy policies of [Google AI Studio](https://ai.google.dev/support/privacy) and [OpenAI](https://openai.com/policies/privacy-policy) regarding their API data usage.
+### 📊 Digital Wellbeing Dashboard
+- **Android-style Stats:** Visualizes your "Productive vs. Neutral" time using **Chart.js**.
+- **7-Day History:** Local time-series data retention to track focus trends over a week.
+- **31-Day Discipline Blueprint:** A month's worth of curated, deep-dive stories of history's most disciplined figures (Kobe Bryant, Marie Curie, etc.) to prime your mindset before you start.
 
-## 7. What Never Leaves Your Machine
-*   **Your Goals & Sub-tasks:** These are private and stored only on your device.
-*   **Your Browsing History:** FocusBridge AI analyzes context in real-time but does not maintain a permanent log of your web history on any server.
-*   **Analytics:** We do not use third-party tracking (like Google Analytics). Your productivity stats (The "Productivity Wheel") are calculated and stored locally.
+---
 
-## 8. Support & Queries
-Mail me at ivishalsinghofficial@gmail.com
+## 🔒 Privacy Architecture
+**FocusBridge AI is 100% Private.**
+- **Zero Data Exfiltration:** Analysis is performed locally using WebAssembly.
+- **No API Keys Required:** No connection to OpenAI or Google servers.
+- **Local Storage:** Your browsing history and goals never leave your machine.
+
+---
+
+## 🛠️ Tech Stack
+- **Extension Framework:** Manifest V3 (Service Workers)
+- **AI Engine:** Transformers.js (ONNX Runtime)
+- **Visualization:** Chart.js
+- **UI/UX:** Canvas API (Particle Physics), CSS3 Transitions (Hardware Accelerated), MutationObserver (Self-Healing DOM)
+- **Communication:** Asynchronous Message Passing & Offscreen API
+
+---
+
+## ⚙️ Installation (Developer Mode)
+1. Clone this repository.
+2. Open Chrome and navigate to `chrome://extensions/`.
+3. Enable **Developer Mode** (top right).
+4. Click **Load Unpacked** and select the project folder.
+5. *Note:* Ensure you have `chart.js` and `transformers.js` in the root directory.
+
+---
+
+## 👨‍💻 Engineering Highlights (For Recruiters)
+- **Performance Optimization:** Implemented quad-quadrant rendering and `translate3d` transforms to maintain 60FPS on high-resource sites like YouTube and Figma.
+- **Robustness:** Built a "Self-Healing UI" using the MutationObserver API to counteract DOM-wiping in modern Single Page Applications (SPAs).
+- **Architecture:** Leveraged the **Offscreen API** to execute high-compute WASM tasks without violating the strict Content Security Policies (CSP) of Manifest V3.
+
+---
+
+## ☕ Support
+If this tool helped you master your focus, consider supporting the developer!
