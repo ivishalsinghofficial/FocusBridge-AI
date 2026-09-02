@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FocusBridge AI: Smart Nudge for ADHD & Deep Work",
-  "version": "2.0",
+  "version": "2.0.1",
   "description": "A privacy-first mindset anchor using local AI to nudge you back to your goals and stop context switching.",
   "permissions": [
     "storage",

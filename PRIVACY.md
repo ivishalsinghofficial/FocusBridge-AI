@@ -1,12 +1,16 @@
 # Privacy Policy for FocusBridge AI
 
-**Last updated: August 22, 2026**
+**Last updated: September 2, 2026**
 
 FocusBridge AI is a Chrome extension that helps you stay focused. We do not operate a server that receives, stores, sells, or shares your personal data.
 
 ## Information stored on your device
 
 FocusBridge AI stores settings, goals, task lists, productivity history, and website rules in `chrome.storage.local` on your device. Captures you choose to save are stored in your browser's local extension database. This data is used to provide the extension's features and is not sent to FocusBridge AI's developer.
+
+The `topSites` permission is used only to populate the New Tab homepage's quick-access shortcuts row with your most-visited sites. This data remains on your device and never leaves it.
+
+Notes created in the Notepad tool are stored locally in `chrome.storage.local` or IndexedDB on your device and are never transmitted anywhere. The Unit Converter performs all conversions locally and does not store or transmit any data.
 
 The extension can analyze the current page to provide focus nudges and Recall Anchor challenges. It requests access to all sites because these features need to work on the site you are currently viewing. It does not upload a browsing-history log to our servers.
 
