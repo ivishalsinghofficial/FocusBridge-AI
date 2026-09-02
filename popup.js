@@ -252,9 +252,3 @@ document.getElementById('endFocusBtn').onclick = () => {
     location.reload();
   });
 };
-
-document.getElementById('feedbackBtn').onclick = () => {
-  chrome.tabs.create({
-    url: 'https://forms.gle/rJS3Z3VzszQ9zDxW8'
-  });
-};

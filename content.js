@@ -51,14 +51,10 @@ function renderGlobalToolsDock() {
     '<style>',
     '*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}',
     '#rail{position:fixed;right:-9px;bottom:180px;display:grid;gap:7px}.tool-bubble{appearance:none;display:grid;place-items:center;width:35px;height:32px;border:1px solid rgba(255,255,255,.22);border-radius:999px 0 0 999px;background:rgba(16,17,20,.86);color:#e8c56e;padding:0 9px 0 4px;cursor:pointer;box-shadow:0 9px 21px rgba(0,0,0,.25);font-size:12px;font-weight:700;transition:transform .18s ease,background .2s ease}.tool-bubble svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.tool-bubble:hover{transform:translateX(-3px);background:rgba(43,39,31,.96)}.tool-bubble.attention-active{--attention-background:rgba(109,82,24,.98);--attention-border:rgba(255,224,135,.8);--attention-color:#ffe09a;--attention-glow:rgba(232,197,110,.16);background:var(--attention-background);border-color:var(--attention-border);color:var(--attention-color);animation:attentionPulse 1.8s ease-in-out infinite}.tool-bubble.attention-score-green{--attention-background:rgba(26,61,26,.98);--attention-border:rgba(128,255,128,.88);--attention-color:#b8ffb8;--attention-glow:rgba(128,255,128,.2)}.tool-bubble.attention-score-red{--attention-background:rgba(61,26,26,.98);--attention-border:rgba(255,128,128,.88);--attention-color:#ffb3b3;--attention-glow:rgba(255,128,128,.2)}@keyframes attentionPulse{50%{box-shadow:0 0 0 5px var(--attention-glow),0 9px 21px rgba(0,0,0,.25)}}',
-    '#panel,#tool-panel{position:fixed;right:14px;top:50%;width:280px;transform:translate(110%,-50%);padding:16px;color:#f6f3ec;background:rgba(17,18,21,.94);border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:-18px 16px 42px rgba(0,0,0,.34);backdrop-filter:blur(18px);transition:transform .24s cubic-bezier(.2,.8,.2,1)}#panel.open,#tool-panel.open{transform:translate(-68px,-50%)}#tool-panel{display:none;max-height:76vh;overflow:auto}.tool-row{display:flex;gap:7px;align-items:center}.tool-row input,.tool-row select,.tool-textarea{width:100%;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(0,0,0,.22);color:#fff;padding:9px;font:12px inherit}.tool-row select{color-scheme:dark}.tool-row select option{background:#17181c;color:#f6f3ec}.tool-textarea{height:116px;resize:vertical}.tool-button{appearance:none;border:1px solid rgba(232,197,110,.38);border-radius:8px;background:rgba(215,180,90,.12);color:#f1d58c;padding:7px 9px;cursor:pointer;font:600 12px inherit}.note-list{display:grid;gap:5px;margin-top:9px;max-height:220px;overflow:auto}.note-item{display:flex;gap:6px;align-items:center;width:100%;text-align:left;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:#f6f3ec;padding:7px;cursor:pointer}.note-copy{min-width:0;flex:1}.note-preview{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.note-time{color:#cfc8bb;font-size:10px;margin-top:3px}.note-delete{border:0;background:transparent;color:#d9ae70;cursor:pointer;font-size:16px}.tool-caption{margin:7px 0;color:#cfc8bb;font-size:11px}.tool-tabs{display:flex;gap:5px;margin:9px 0}.tool-tabs button{flex:1}.converter-value{font-size:20px;font-weight:700;color:#f1d58c;text-align:center;margin:11px 0}#tool-panel.notepad-panel{width:min(410px,calc(100vw - 94px));height:min(530px,76vh);padding:22px;overflow:hidden;background:linear-gradient(145deg,rgba(31,29,24,.97),rgba(15,16,19,.97))}#tool-panel.notepad-panel .head{margin-bottom:17px}#tool-panel.notepad-panel .tool-row{margin-bottom:13px}#tool-panel.notepad-panel .tool-textarea{height:245px;resize:none;padding:14px;line-height:26px;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.025) 0,rgba(255,255,255,.025) 25px,rgba(232,197,110,.09) 26px),rgba(32,29,23,.78);border-color:rgba(232,197,110,.27);font-size:14px}#tool-panel.notepad-panel .note-list{max-height:132px;margin-top:10px;padding-right:3px}#tool-panel.notepad-panel .tool-caption{margin:9px 0}#tool-panel.notepad-panel .note-item{padding:9px;background:rgba(255,255,255,.055)}',
+    '#panel,#tool-panel{position:fixed;right:14px;top:50%;width:280px;transform:translate(110%,-50%);padding:16px;color:#f6f3ec;background:rgba(17,18,21,.94);border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:-18px 16px 42px rgba(0,0,0,.34);transition:transform .24s cubic-bezier(.2,.8,.2,1)}#panel{display:none}#panel.open,#tool-panel.open{display:block;transform:translate(-68px,-50%);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}#tool-panel{display:none;max-height:76vh;overflow:auto}.tool-row{display:flex;gap:7px;align-items:center}.tool-row input,.tool-row select,.tool-textarea{width:100%;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(0,0,0,.22);color:#fff;padding:9px;font:12px inherit}.tool-row select{color-scheme:dark}.tool-row select option{background:#17181c;color:#f6f3ec}.tool-textarea{height:116px;resize:vertical}.tool-button{appearance:none;border:1px solid rgba(232,197,110,.38);border-radius:8px;background:rgba(215,180,90,.12);color:#f1d58c;padding:7px 9px;cursor:pointer;font:600 12px inherit}.note-list{display:grid;gap:5px;margin-top:9px;max-height:220px;overflow:auto}.note-item{display:flex;gap:6px;align-items:center;width:100%;text-align:left;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:#f6f3ec;padding:7px;cursor:pointer}.note-copy{min-width:0;flex:1}.note-preview{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.note-time{color:#cfc8bb;font-size:10px;margin-top:3px}.note-delete{border:0;background:transparent;color:#d9ae70;cursor:pointer;font-size:16px}.tool-caption{margin:7px 0;color:#cfc8bb;font-size:11px}.tool-tabs{display:flex;gap:5px;margin:9px 0}.tool-tabs button{flex:1}.converter-value{font-size:20px;font-weight:700;color:#f1d58c;text-align:center;margin:11px 0}#tool-panel.notepad-panel{width:min(410px,calc(100vw - 94px));height:min(530px,76vh);padding:22px;overflow:hidden;background:linear-gradient(145deg,rgba(31,29,24,.97),rgba(15,16,19,.97))}#tool-panel.notepad-panel .head{margin-bottom:17px}#tool-panel.notepad-panel .tool-row{margin-bottom:13px}#tool-panel.notepad-panel .tool-textarea{height:245px;resize:none;padding:14px;line-height:26px;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.025) 0,rgba(255,255,255,.025) 25px,rgba(232,197,110,.09) 26px),rgba(32,29,23,.78);border-color:rgba(232,197,110,.27);font-size:14px}#tool-panel.notepad-panel .note-list{max-height:132px;margin-top:10px;padding-right:3px}#tool-panel.notepad-panel .tool-caption{margin:9px 0}#tool-panel.notepad-panel .note-item{padding:9px;background:rgba(255,255,255,.055)}',
     '#tool-panel.notepad-panel{display:flex;flex-direction:column;height:min(580px,82vh)}#tool-panel.notepad-panel .note-actions{margin-bottom:14px}#tool-panel.notepad-panel #clear-note{position:absolute;right:22px;bottom:22px;padding:6px 9px;font-size:11px;background:rgba(215,180,90,.1)}#tool-panel.notepad-panel .note-tab{background:transparent;border-color:transparent;color:#cfc8bb}#tool-panel.notepad-panel .note-tab.active,#tool-panel.notepad-panel #save-note{background:#d7b45a;color:#17140c;border-color:#e8c56e}#tool-panel.notepad-panel .note-view{min-height:0;flex:1;display:flex;flex-direction:column;padding-bottom:32px}#tool-panel.notepad-panel .note-view[hidden]{display:none}#tool-panel.notepad-panel .tool-textarea{height:330px!important;min-height:330px;flex:1;margin:0}#tool-panel.notepad-panel .note-save-row{margin:10px 0 0;justify-content:space-between}#tool-panel.notepad-panel #note-history{gap:10px}#tool-panel.notepad-panel #note-history #note-search{flex:0 0 auto}#tool-panel.notepad-panel #note-history .note-list{max-height:none;flex:1;margin:0;padding-right:3px}#tool-panel.notepad-panel .note-delete{opacity:0}.note-item:hover .note-delete{opacity:1}',
-    '.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}#close{appearance:none;border:0;background:transparent;color:#f6f3ec;cursor:pointer;font-size:21px;line-height:1;padding:0 2px}',
-    '#display{width:100%;height:44px;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:rgba(0,0,0,.22);color:#fff;padding:0 12px;margin-bottom:9px;text-align:right;font-size:19px;outline:none}.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}',
-    '.key,.action{appearance:none;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.07);color:#f8f5ee;min-height:36px;cursor:pointer;font-size:14px}.key:hover,.action:hover{background:rgba(210,178,102,.18);border-color:rgba(223,196,128,.38)}.key.operator{color:#e8c56e}.key.equals{background:#d7b45a;color:#17140c;font-weight:800}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px}.action{min-height:40px;font-size:12px;font-weight:650}#status{min-height:16px;margin:10px 1px 0;color:#cfc8bb;font-size:11px;text-align:center}@media(max-width:430px){#panel{width:260px}.tool-bubble{padding:9px}.tool-bubble span:last-child{display:none}}',
-    '</style><section id="panel" aria-label="FocusBridge tools" aria-hidden="true"><div class="head"><span>Focus tools</span><button id="close" type="button" aria-label="Close tools">×</button></div><input id="display" aria-label="Calculator display" value="0" readonly><div class="keys" aria-label="Calculator">',
-    '<button class="key operator" data-key="C">C</button><button class="key operator" data-key="(">(</button><button class="key operator" data-key=")">)</button><button class="key operator" data-key="/">÷</button><button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button><button class="key operator" data-key="*">×</button><button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button><button class="key operator" data-key="-">−</button><button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button><button class="key operator" data-key="+">+</button><button class="key" data-key="0">0</button><button class="key" data-key=".">.</button><button class="key" data-key="back">⌫</button><button class="key equals" data-key="=">=</button>',
-    '</div><div id="status" role="status" aria-live="polite"></div></section><div id="rail" aria-label="FocusBridge quick tools"><button id="screenshot" class="tool-bubble" type="button" title="Capture area" aria-label="Capture area"><svg viewBox="0 0 24 24"><path d="M4 8V5h3M16 5h3v3M20 16v3h-3M8 20H5v-3"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg></button><button id="history" hidden type="button" aria-hidden="true"></button></div>'
+    '.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}@media(max-width:430px){#panel{width:260px}.tool-bubble{padding:9px}.tool-bubble span:last-child{display:none}}',
+    '</style><section id="panel" aria-label="Recent captures" aria-hidden="true"></section><div id="rail" aria-label="FocusBridge quick tools"><button id="screenshot" class="tool-bubble" type="button" title="Capture area" aria-label="Capture area"><svg viewBox="0 0 24 24"><path d="M4 8V5h3M16 5h3v3M20 16v3h-3M8 20H5v-3"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg></button><button id="history" hidden type="button" aria-hidden="true"></button></div>'
   ].join('');
   const panel = shadow.querySelector('#panel');
   const rail = shadow.querySelector('#rail');
@@ -71,34 +67,14 @@ function renderGlobalToolsDock() {
     button.innerHTML = `<svg viewBox="0 0 24 24">${svg}</svg>`; rail.insertBefore(button, shadow.querySelector('#history')); return button;
   };
   const notepadButton = notepadToolEnabled ? addToolBubble('notepad', 'Notepad', '<path d="M5 3h12a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2V3Z"/><path d="M8 7h7M8 11h7M8 15h4M16 17l3-3"/>') : null;
-  const converterButton = unitConverterToolEnabled ? addToolBubble('converter', 'Unit converter', '<path d="M4 7h16M7 4v6M17 4v6M4 17h16M7 14v6M17 14v6"/>') : null;
+  const converterButton = unitConverterToolEnabled ? addToolBubble('converter', 'Unit converter', '<path d="M4 7h14M14 3l4 4-4 4M20 17H6M10 13l-4 4 4 4"/>') : null;
   const attentionButton = attentionCheckEnabled ? addToolBubble('attention-check', 'Start attention check', '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.8"/>') : null;
   console.debug('FocusBridge attention check dock state', { attentionCheckEnabled, rendered: !!attentionButton });
   if (!screenshotToolEnabled) shadow.querySelector('#screenshot').remove();
-  const calculatorLaunch = shadow.querySelector('#calculator-launch');
-  const display = shadow.querySelector('#display');
-  const status = shadow.querySelector('#status');
   const setOpen = (open) => {
     panel.classList.toggle('open', open);
     panel.setAttribute('aria-hidden', String(!open));
-    calculatorLaunch?.setAttribute('aria-expanded', String(open));
   };
-  calculatorLaunch?.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
-  shadow.querySelector('#close').addEventListener('click', () => { setOpen(false); toolPanel.classList.remove('open'); toolPanel.style.display = 'none'; });
-  shadow.querySelectorAll('[data-key]').forEach((button) => button.addEventListener('click', () => {
-    const key = button.dataset.key;
-    let value = display.value === '0' ? '' : display.value;
-    if (key === 'C') value = '';
-    else if (key === 'back') value = value.slice(0, -1);
-    else if (key === '=') {
-      try {
-        if (!/^[0-9+\-*/().\s]+$/.test(value)) throw new Error('Invalid expression');
-        const result = Function('"use strict"; return (' + value + ')')();
-        value = Number.isFinite(result) ? String(result) : '';
-      } catch { value = ''; status.textContent = 'Check the calculation.'; }
-    } else value += key;
-    display.value = value || '0';
-  }));
   const relativeTime = timestamp => {
     const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
     if (seconds < 60) return 'just now'; if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`; if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`; return `${Math.floor(seconds / 86400)}d ago`;
@@ -272,7 +248,7 @@ function renderGlobalToolsDock() {
   const captureIcon = name => `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${captureIconPaths[name]}</svg>`;
   captureLayer.innerHTML = '<div id="shade" style="position:fixed;inset:0;background:rgba(0,0,0,.62);cursor:crosshair"></div><div id="selection" style="display:none;position:fixed;border:1px dashed #e8c56e;box-shadow:0 0 0 9999px rgba(0,0,0,.42),0 0 0 1px rgba(8,9,11,.92);cursor:move"><div id="selectionSize" aria-live="polite"></div><div id="handle" style="position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;background:#e8c56e;border:2px solid #17140c;border-radius:50%;cursor:nwse-resize"></div></div><div id="pickerBar" style="display:none;position:fixed;left:50%;bottom:28px;transform:translateX(-50%);gap:8px;padding:8px;border:1px solid rgba(255,255,255,.22);border-radius:12px;background:rgba(17,18,21,.94);box-shadow:0 12px 34px rgba(0,0,0,.35)"><button id="pickerCancel" title="Cancel" aria-label="Cancel" type="button">&#215;</button><button id="cropEdit" title="Annotate selected area" aria-label="Annotate selected area" type="button">&#9998;</button></div><div id="editor" style="display:none;position:fixed;inset:0;background:rgba(10,11,13,.97);padding:22px;text-align:center"><div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:12px"><button id="backToCrop" title="Back to selection" aria-label="Back to selection" type="button">&#8592;</button><button id="pen" title="Pen" aria-label="Pen" type="button">&#9998;</button><input id="penColor" type="color" value="#e8c56e" aria-label="Pen color"><button id="copyCrop" title="Copy to clipboard" aria-label="Copy to clipboard" type="button">&#10697;</button><button id="downloadCrop" title="Download PNG" aria-label="Download PNG" type="button">&#8681;</button><button id="closeEditor" title="Done" aria-label="Done" type="button">&#215;</button></div><canvas id="captureCanvas" style="max-width:92vw;max-height:82vh;cursor:crosshair;box-shadow:0 12px 45px rgba(0,0,0,.5)"></canvas><div id="captureStatus" style="margin-top:9px;font-size:12px;color:#d5cfbf"></div></div>';
   const captureStyle = document.createElement('style');
-  captureStyle.textContent = '#selectionSize{position:absolute;left:-1px;top:-29px;padding:4px 7px;border:1px solid rgba(232,197,110,.72);border-radius:6px;background:rgba(12,13,15,.94);box-shadow:0 5px 14px rgba(0,0,0,.34);color:#f1d58c;font-size:12px;font-weight:700;line-height:1;letter-spacing:.02em;white-space:nowrap;pointer-events:none}#pickerBar,#editor>div:first-child{border:1px solid rgba(255,255,255,.22)!important;border-radius:14px;background:rgba(17,18,21,.88)!important;backdrop-filter:blur(16px);box-shadow:0 12px 34px rgba(0,0,0,.35)}#pickerBar button,#editor button{appearance:none;display:grid;place-items:center;width:38px;height:38px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,255,255,.09);color:#fff;padding:0;cursor:pointer}#pickerBar button svg,#editor button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}#penColor{width:38px;height:38px;padding:4px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,255,255,.09);cursor:pointer}#pickerBar button:hover,#editor button:hover{background:rgba(255,255,255,.16)}';
+  captureStyle.textContent = '#selectionSize{position:absolute;left:-1px;top:-29px;padding:4px 7px;border:1px solid rgba(232,197,110,.72);border-radius:6px;background:rgba(12,13,15,.94);box-shadow:0 5px 14px rgba(0,0,0,.34);color:#f1d58c;font-size:12px;font-weight:700;line-height:1;letter-spacing:.02em;white-space:nowrap;pointer-events:none}#pickerBar,#editor>div:first-child{border:1px solid rgba(255,255,255,.22)!important;border-radius:11px;background:rgba(17,18,21,.88)!important;backdrop-filter:blur(16px);box-shadow:0 12px 34px rgba(0,0,0,.35)}#pickerBar button,#editor button{appearance:none;display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.09);color:#fff;padding:0;cursor:pointer}#pickerBar button svg,#editor button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}#penColor{width:30px;height:30px;padding:4px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.09);cursor:pointer}#pickerBar button:hover,#editor button:hover{background:rgba(255,255,255,.16)}';
   shadow.append(captureStyle, captureLayer);
   const selection = captureLayer.querySelector('#selection');
   const selectionSize = captureLayer.querySelector('#selectionSize');
@@ -289,6 +265,33 @@ function renderGlobalToolsDock() {
     const button = captureLayer.querySelector(selector) || (selector === '#quickDownload' ? quickDownload : selector === '#quickCopy' ? quickCopy : null);
     if (button) button.innerHTML = captureIcon(icon);
   });
+  const editorToolbar = editor.querySelector('div:first-child');
+  editorToolbar.style.width = 'fit-content';
+  editorToolbar.style.maxWidth = 'calc(100vw - 44px)';
+  editorToolbar.style.margin = '0 auto 8px';
+  editorToolbar.style.padding = '5px';
+  editorToolbar.style.gap = '3px';
+  editorToolbar.style.flexWrap = 'wrap';
+  editorToolbar.style.justifyContent = 'center';
+  const arrowTool = document.createElement('button');
+  arrowTool.type = 'button'; arrowTool.id = 'arrow-tool'; arrowTool.title = 'Draw arrow'; arrowTool.setAttribute('aria-label', 'Draw arrow');
+  arrowTool.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19 18 5M11 5h7v7"/></svg>';
+  const textTool = document.createElement('button');
+  textTool.type = 'button'; textTool.id = 'text-tool'; textTool.title = 'Add text'; textTool.setAttribute('aria-label', 'Add text');
+  textTool.textContent = 'T'; textTool.style.font = '700 17px/1 sans-serif';
+  const undoTool = document.createElement('button');
+  undoTool.type = 'button'; undoTool.id = 'undo-tool'; undoTool.title = 'Undo last annotation'; undoTool.setAttribute('aria-label', 'Undo last annotation');
+  undoTool.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M4 12h9a6 6 0 0 1 0 12h-1"/></svg>';
+  const fontSize = document.createElement('select');
+  fontSize.id = 'annotation-font-size'; fontSize.setAttribute('aria-label', 'Text size');
+  fontSize.innerHTML = '<option value="8">8</option><option value="12">12</option><option value="14">14</option><option value="16" selected>16</option><option value="18">18</option><option value="20">20</option><option value="24">24</option><option value="28">28</option><option value="32">32</option><option value="40">40</option>';
+  fontSize.style.cssText = 'width:46px;height:30px;padding:0 4px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:#17181c;color:#fff;font:11px inherit;cursor:pointer;';
+  editorToolbar.insertBefore(arrowTool, captureLayer.querySelector('#penColor'));
+  editorToolbar.insertBefore(textTool, captureLayer.querySelector('#penColor'));
+  editorToolbar.insertBefore(undoTool, captureLayer.querySelector('#penColor'));
+  editorToolbar.insertBefore(fontSize, captureLayer.querySelector('#penColor'));
+  captureLayer.querySelector('#penColor').style.width = '30px';
+  captureLayer.querySelector('#penColor').style.height = '30px';
   const copyImageDirectly = async (dataUrl) => {
     const match = /^data:([^;,]+);base64,(.+)$/.exec(dataUrl);
     if (!match) throw new Error('Invalid image data.');
@@ -305,7 +308,7 @@ function renderGlobalToolsDock() {
     }
   };
   const completeCapture = async (dataUrl, format, action) => { await action(); };
-  let sourceImage, rect = {}, pointerMode = null, pointerStart, drawing = false, penEnabled = false, isCreatingSelection = false;
+  let sourceImage, rect = {}, pointerMode = null, pointerStart, drawing = false, annotationTool = 'pen', arrowStart = null, arrowPreview = null, activeTextInput = null, annotationContext = null, annotationHistory = [], textAnnotations = [], arrowAnnotations = [], isCreatingSelection = false;
   const setSelection = () => {
     Object.assign(selection.style, { left: rect.x + 'px', top: rect.y + 'px', width: rect.width + 'px', height: rect.height + 'px' });
     const scaleX = sourceImage?.naturalWidth / window.innerWidth || 1;
@@ -322,7 +325,7 @@ function renderGlobalToolsDock() {
     selection.style.width = '';
     selection.style.height = '';
   };
-  const closeCapture = () => { captureLayer.style.display = 'none'; editor.style.display = 'none'; pickerBar.style.display = 'none'; resetSelection(); captureStatus.textContent = ''; captureLayer.remove(); };
+  const closeCapture = () => { removeTextBox?.(); [...textAnnotations, ...arrowAnnotations].forEach(annotation => { annotation.element.remove(); annotation.removeButton?.remove(); }); textAnnotations = []; arrowAnnotations = []; captureLayer.style.display = 'none'; editor.style.display = 'none'; pickerBar.style.display = 'none'; resetSelection(); captureStatus.textContent = ''; captureLayer.remove(); };
   const pointerMove = (event) => {
     if (!pointerMode) return;
     const dx = event.clientX - pointerStart.x, dy = event.clientY - pointerStart.y;
@@ -378,36 +381,158 @@ function renderGlobalToolsDock() {
   captureLayer.querySelector('#cropEdit').addEventListener('click', () => {
     const scaleX = sourceImage.naturalWidth / window.innerWidth, scaleY = sourceImage.naturalHeight / window.innerHeight;
     canvas.width = Math.round(rect.width * scaleX); canvas.height = Math.round(rect.height * scaleY);
-    canvas.getContext('2d').drawImage(sourceImage, rect.x * scaleX, rect.y * scaleY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+    annotationContext = canvas.getContext('2d', { willReadFrequently: true });
+    annotationContext.drawImage(sourceImage, rect.x * scaleX, rect.y * scaleY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+    annotationHistory = []; [...textAnnotations, ...arrowAnnotations].forEach(annotation => { annotation.element.remove(); annotation.removeButton?.remove(); }); textAnnotations = []; arrowAnnotations = [];
     pickerBar.style.display = 'none'; selection.style.display = 'none'; editor.style.display = 'block'; captureStatus.textContent = 'Use Pen to mark the image, then copy or download.';
   });
-  captureLayer.querySelector('#backToCrop').addEventListener('click', () => { editor.style.display = 'none'; pickerBar.style.display = 'flex'; selection.style.display = 'block'; });
+  captureLayer.querySelector('#backToCrop').addEventListener('click', () => { removeTextBox?.(); editor.style.display = 'none'; pickerBar.style.display = 'flex'; selection.style.display = 'block'; });
   captureLayer.querySelector('#closeEditor').addEventListener('click', closeCapture);
-  captureLayer.querySelector('#pen').addEventListener('click', (event) => { penEnabled = !penEnabled; event.currentTarget.style.background = penEnabled ? '#d7b45a' : ''; event.currentTarget.style.color = penEnabled ? '#17140c' : ''; });
+  const annotationButtons = { pen: captureLayer.querySelector('#pen'), arrow: arrowTool, text: textTool };
+  const setAnnotationTool = tool => {
+    annotationTool = tool;
+    Object.entries(annotationButtons).forEach(([name, button]) => {
+      const active = name === tool;
+      button.style.background = active ? '#d7b45a' : '';
+      button.style.color = active ? '#17140c' : '';
+    });
+    captureStatus.textContent = tool === 'text' ? 'Click the image to add a text box.' : tool === 'arrow' ? 'Drag on the image to preview and place an arrow.' : 'Draw freely on the image.';
+  };
+  annotationButtons.pen.addEventListener('click', () => setAnnotationTool('pen'));
+  arrowTool.addEventListener('click', () => setAnnotationTool('arrow'));
+  textTool.addEventListener('click', () => setAnnotationTool('text'));
+  setAnnotationTool('pen');
   const canvasPoint = (event) => { const bounds = canvas.getBoundingClientRect(); return { x:(event.clientX - bounds.left) * canvas.width / bounds.width, y:(event.clientY - bounds.top) * canvas.height / bounds.height }; };
-  canvas.addEventListener('pointerdown', (event) => { if (!penEnabled) return; drawing = true; const point = canvasPoint(event), context = canvas.getContext('2d'); context.beginPath(); context.moveTo(point.x, point.y); canvas.setPointerCapture(event.pointerId); });
-  canvas.addEventListener('pointermove', (event) => { if (!drawing) return; const point = canvasPoint(event), context = canvas.getContext('2d'); context.lineWidth = Math.max(3, canvas.width / 350); context.lineCap = 'round'; context.strokeStyle = captureLayer.querySelector('#penColor').value; context.lineTo(point.x, point.y); context.stroke(); });
-  canvas.addEventListener('pointerup', () => { drawing = false; });
+  const saveAnnotationState = () => annotationHistory.push(annotationContext.getImageData(0, 0, canvas.width, canvas.height));
+  const removeTextBox = () => { activeTextInput?.remove(); activeTextInput = null; };
+  undoTool.addEventListener('click', () => {
+    removeTextBox();
+    const previous = annotationHistory.pop();
+    if (!previous) { captureStatus.textContent = 'Nothing to undo.'; return; }
+    annotationContext.putImageData(previous, 0, 0); captureStatus.textContent = 'Last annotation removed.';
+  });
+  const drawArrow = (context, from, to, color = captureLayer.querySelector('#penColor').value) => {
+    const head = Math.max(10, canvas.width / 45), angle = Math.atan2(to.y - from.y, to.x - from.x);
+    context.strokeStyle = color; context.fillStyle = context.strokeStyle; context.lineWidth = Math.max(3, canvas.width / 350); context.lineCap = 'round';
+    context.beginPath(); context.moveTo(from.x, from.y); context.lineTo(to.x, to.y); context.stroke();
+    context.beginPath(); context.moveTo(to.x, to.y); context.lineTo(to.x - head * Math.cos(angle - Math.PI / 6), to.y - head * Math.sin(angle - Math.PI / 6)); context.lineTo(to.x - head * Math.cos(angle + Math.PI / 6), to.y - head * Math.sin(angle + Math.PI / 6)); context.closePath(); context.fill();
+  };
+  const drawTextAnnotations = () => {
+    const bounds = canvas.getBoundingClientRect();
+    textAnnotations.forEach(annotation => {
+      const scale = canvas.width / bounds.width;
+      annotationContext.fillStyle = annotation.color;
+      annotationContext.font = `${annotation.size * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+      annotationContext.textBaseline = 'top';
+      annotation.value.split(/\r?\n/).forEach((line, index) => annotationContext.fillText(line, annotation.x, annotation.y + index * annotation.size * 1.25 * scale));
+    });
+  };
+  const drawArrowAnnotations = () => arrowAnnotations.forEach(annotation => drawArrow(annotationContext, annotation.from, annotation.to, annotation.color));
+  const exportAnnotatedImage = () => {
+    const snapshot = annotationContext.getImageData(0, 0, canvas.width, canvas.height);
+    drawArrowAnnotations(); drawTextAnnotations();
+    const dataUrl = canvas.toDataURL('image/png');
+    annotationContext.putImageData(snapshot, 0, 0);
+    return dataUrl;
+  };
+  const placeTextBox = point => {
+    removeTextBox();
+    const bounds = canvas.getBoundingClientRect(), displaySize = Number(fontSize.value);
+    const input = document.createElement('textarea');
+    input.placeholder = 'Type here'; input.maxLength = 160; input.setAttribute('aria-label', 'Annotation text');
+    input.style.cssText = `position:fixed!important;z-index:2147483647!important;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;left:${bounds.left + point.x * bounds.width / canvas.width}px;top:${bounds.top + point.y * bounds.height / canvas.height}px;width:190px;min-height:${displaySize + 16}px;padding:6px 8px;border:2px solid ${captureLayer.querySelector('#penColor').value};border-radius:7px;background:rgba(18,19,22,.98);color:${captureLayer.querySelector('#penColor').value};font:${displaySize}px/1.25 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;resize:both;outline:none;box-shadow:0 8px 24px rgba(0,0,0,.45);`;
+    const commit = () => {
+      if (input !== activeTextInput) return;
+      const value = input.value.trim();
+      if (value) {
+        const placed = document.createElement('div');
+        const color = captureLayer.querySelector('#penColor').value;
+        let x = point.x, y = point.y;
+        placed.textContent = value;
+        placed.style.cssText = `position:fixed!important;z-index:2147483647!important;left:${bounds.left + x * bounds.width / canvas.width}px;top:${bounds.top + y * bounds.height / canvas.height}px;max-width:${Math.max(40, input.offsetWidth)}px;padding:6px 8px;border:1px dashed transparent;border-radius:5px;color:${color};font:${displaySize}px/1.25 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;white-space:pre-wrap;text-align:left;cursor:move;user-select:none;`;
+        const annotation = { element: placed, value, x, y, size: displaySize, color };
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button'; removeButton.title = 'Remove text'; removeButton.setAttribute('aria-label', 'Remove text'); removeButton.textContent = '−';
+        removeButton.style.cssText = 'position:absolute;right:-7px;top:-7px;display:grid;place-items:center;width:14px;height:14px;border:1px solid #fff;border-radius:50%;background:#d92d20;color:#fff;padding:0;font:700 13px/11px sans-serif;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.35);';
+        removeButton.addEventListener('pointerdown', event => event.stopPropagation());
+        removeButton.addEventListener('click', event => { event.stopPropagation(); placed.remove(); textAnnotations = textAnnotations.filter(item => item !== annotation); });
+        placed.append(removeButton);
+        placed.addEventListener('pointerdown', event => {
+          const startX = event.clientX, startY = event.clientY, originX = annotation.x, originY = annotation.y;
+          placed.setPointerCapture(event.pointerId);
+          const move = moveEvent => {
+            annotation.x = Math.max(0, Math.min(canvas.width, originX + (moveEvent.clientX - startX) * canvas.width / bounds.width));
+            annotation.y = Math.max(0, Math.min(canvas.height, originY + (moveEvent.clientY - startY) * canvas.height / bounds.height));
+            placed.style.left = `${bounds.left + annotation.x * bounds.width / canvas.width}px`;
+            placed.style.top = `${bounds.top + annotation.y * bounds.height / canvas.height}px`;
+          };
+          placed.addEventListener('pointermove', move);
+          placed.addEventListener('pointerup', () => { placed.removeEventListener('pointermove', move); }, { once: true });
+        });
+        captureLayer.append(placed); textAnnotations.push(annotation);
+      }
+      confirmButton?.remove(); removeTextBox();
+    };
+    const confirmButton = document.createElement('button');
+    confirmButton.type = 'button'; confirmButton.title = 'Place text'; confirmButton.setAttribute('aria-label', 'Place text'); confirmButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';
+    confirmButton.style.cssText = `position:fixed;z-index:2147483647;left:${bounds.left + point.x * bounds.width / canvas.width + 194}px;top:${bounds.top + point.y * bounds.height / canvas.height}px;display:grid;place-items:center;width:24px;height:24px;border:1px solid #fff;border-radius:50%;background:${captureLayer.querySelector('#penColor').value};color:#17140c;padding:4px;cursor:pointer;box-shadow:0 2px 7px rgba(0,0,0,.4);`;
+    confirmButton.querySelector('svg').style.cssText = 'width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;';
+    const removeInput = () => { confirmButton.remove(); removeTextBox(); };
+    confirmButton.addEventListener('click', commit);
+    input.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); removeInput(); } });
+    captureLayer.append(input, confirmButton); activeTextInput = input; requestAnimationFrame(() => input.focus({ preventScroll: true })); captureStatus.textContent = 'Enter adds a new line. Click the arrow button to place, then drag the text to reposition it.';
+  };
+  canvas.addEventListener('pointerdown', (event) => {
+    const point = canvasPoint(event), context = annotationContext;
+    if (annotationTool === 'text') {
+      placeTextBox(point); return;
+    }
+    drawing = true; canvas.setPointerCapture(event.pointerId);
+    if (annotationTool === 'arrow') { arrowStart = point; arrowPreview = context.getImageData(0, 0, canvas.width, canvas.height); return; }
+    saveAnnotationState();
+    context.beginPath(); context.moveTo(point.x, point.y);
+  });
+  canvas.addEventListener('pointermove', (event) => { if (!drawing) return; const point = canvasPoint(event), context = annotationContext; if (annotationTool === 'arrow' && arrowStart && arrowPreview) { context.putImageData(arrowPreview, 0, 0); drawArrow(context, arrowStart, point); return; } if (annotationTool !== 'pen') return; context.lineWidth = Math.max(3, canvas.width / 350); context.lineCap = 'round'; context.strokeStyle = captureLayer.querySelector('#penColor').value; context.lineTo(point.x, point.y); context.stroke(); });
+  canvas.addEventListener('pointerup', event => {
+    if (drawing && annotationTool === 'arrow' && arrowStart && arrowPreview) {
+      const to = canvasPoint(event), from = arrowStart, bounds = canvas.getBoundingClientRect(), color = captureLayer.querySelector('#penColor').value;
+      annotationContext.putImageData(arrowPreview, 0, 0);
+      const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      overlay.setAttribute('viewBox', `0 0 ${canvas.width} ${canvas.height}`);
+      overlay.style.cssText = `position:fixed;z-index:2147483647;left:${bounds.left}px;top:${bounds.top}px;width:${bounds.width}px;height:${bounds.height}px;overflow:visible;pointer-events:none;`;
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('x1', from.x); line.setAttribute('y1', from.y); line.setAttribute('x2', to.x); line.setAttribute('y2', to.y); line.setAttribute('stroke', color); line.setAttribute('stroke-width', Math.max(3, canvas.width / 350)); line.setAttribute('stroke-linecap', 'round');
+      const angle = Math.atan2(to.y - from.y, to.x - from.x), head = Math.max(10, canvas.width / 45);
+      const headPath = document.createElementNS('http://www.w3.org/2000/svg', 'path'); headPath.setAttribute('d', `M ${to.x} ${to.y} L ${to.x - head * Math.cos(angle - Math.PI / 6)} ${to.y - head * Math.sin(angle - Math.PI / 6)} L ${to.x - head * Math.cos(angle + Math.PI / 6)} ${to.y - head * Math.sin(angle + Math.PI / 6)} Z`); headPath.setAttribute('fill', color);
+      overlay.append(line, headPath);
+      const annotation = { element: overlay, from, to, color };
+      const removeButton = document.createElement('button'); removeButton.type = 'button'; removeButton.title = 'Remove arrow'; removeButton.setAttribute('aria-label', 'Remove arrow'); removeButton.textContent = '−';
+      removeButton.style.cssText = `position:fixed;z-index:2147483647;left:${bounds.left + to.x * bounds.width / canvas.width - 7}px;top:${bounds.top + to.y * bounds.height / canvas.height - 7}px;display:grid;place-items:center;width:14px;height:14px;border:1px solid #fff;border-radius:50%;background:#d92d20;color:#fff;padding:0;font:700 13px/11px sans-serif;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.35);`;
+      annotation.removeButton = removeButton;
+      removeButton.addEventListener('click', () => { overlay.remove(); removeButton.remove(); arrowAnnotations = arrowAnnotations.filter(item => item !== annotation); });
+      captureLayer.append(overlay, removeButton); arrowAnnotations.push(annotation);
+    }
+    drawing = false; arrowStart = null; arrowPreview = null;
+  });
   captureLayer.querySelector('#copyCrop').addEventListener('click', () => {
     captureStatus.textContent = 'Copying…';
-    const dataUrl = canvas.toDataURL('image/png');
+    const dataUrl = exportAnnotatedImage();
     completeCapture(dataUrl, 'png', () => copyImageDirectly(dataUrl)).then(closeCapture).catch(error => { captureStatus.textContent = `Copy failed: ${error.name || 'Error'} — ${error.message || 'Browser blocked clipboard access.'}`; });
   });
-  captureLayer.querySelector('#downloadCrop').addEventListener('click', () => { const dataUrl = canvas.toDataURL('image/png'); completeCapture(dataUrl, 'png', () => { const link = document.createElement('a'); link.href = dataUrl; link.download = 'focusbridge-capture.png'; link.click(); }).then(closeCapture).catch(error => { captureStatus.textContent = `Save failed: ${error.message}`; }); });
+  captureLayer.querySelector('#downloadCrop').addEventListener('click', () => { const dataUrl = exportAnnotatedImage(); completeCapture(dataUrl, 'png', () => { const link = document.createElement('a'); link.href = dataUrl; link.download = 'focusbridge-capture.png'; link.click(); }).then(closeCapture).catch(error => { captureStatus.textContent = `Save failed: ${error.message}`; }); });
   const openScreenshotCapture = () => {
     if (!captureLayer.isConnected) shadow.append(captureLayer);
-    status.textContent = 'Preparing area capture…';
+    captureStatus.textContent = 'Preparing area capture…';
     host.style.visibility = 'hidden';
     requestAnimationFrame(() => setTimeout(() => {
       chrome.runtime.sendMessage({ action: 'captureVisibleScreenshot' }, (response) => {
         host.style.visibility = '';
         if (chrome.runtime.lastError || !response?.success || !response.dataUrl) {
-          status.textContent = response?.error || 'Could not capture the page.';
+          captureStatus.textContent = response?.error || 'Could not capture the page.';
           return;
         }
         sourceImage = new Image();
         sourceImage.onload = () => {
-          resetSelection(); pickerBar.style.display = 'none'; captureLayer.style.display = 'block'; status.textContent = '';
+          resetSelection(); pickerBar.style.display = 'none'; captureLayer.style.display = 'block'; captureStatus.textContent = '';
         };
         sourceImage.src = response.dataUrl;
       });
@@ -438,7 +563,7 @@ function renderGlobalToolsDock() {
     document.addEventListener('keydown', event => {
       if (event.key.toLowerCase() !== key) return;
       if (!enabled() || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || isTextEntryActive() || timer || triggered) return;
-      timer = setTimeout(() => { timer = null; if (enabled()) { triggered = true; openFn(); } }, 2000);
+      timer = setTimeout(() => { timer = null; if (enabled()) { triggered = true; openFn(); } }, 1500);
     }, true);
     document.addEventListener('keyup', event => { if (event.key.toLowerCase() === key) { if (timer) clearTimeout(timer); timer = null; triggered = false; } }, true);
   };
