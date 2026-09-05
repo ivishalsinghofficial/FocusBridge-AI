@@ -1,0 +1,35 @@
+:root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #101010; color: #f4f1e9; }
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }
+* { box-sizing: border-box; } body { margin: 0; } .settings { width: min(680px, calc(100% - 40px)); margin: 72px auto; } .eyebrow { color: #d7ad4a; font-size: 12px; letter-spacing: .12em; } .settings-header { display:flex; align-items:center; justify-content:space-between; gap:24px; margin:8px 0 20px; } h1 { margin:0; font-size:34px; font-weight:500; } .setting-row { display:flex; justify-content:space-between; gap:28px; padding:22px 0; border-top:1px solid #2b2b2b; } h2 { margin:0 0 6px; font-size:17px; font-weight:500; } p { margin:0; color:#aaa; font-size:14px; line-height:1.45; } .switch { flex: 0 0 auto; padding-top:4px; cursor:pointer; } .switch input { position:absolute; opacity:0; } .switch span { display:block; width:44px; height:24px; border-radius:20px; background:#3a3a3a; transition:.2s; } .switch span::after { content:""; display:block; width:18px; height:18px; margin:3px; border-radius:50%; background:#fff; transition:.2s; } .switch input:checked + span { background:#b98928; } .switch input:checked + span::after { transform:translateX(20px); } .name-setting { margin-top:28px; } .name-setting label { display:block; margin-bottom:8px; font-size:14px; } .name-setting span { color:#888; } .name-setting input { width:100%; padding:12px 0; border:0; border-bottom:1px solid #444; outline:0; color:inherit; background:transparent; font:inherit; } #saved { min-height:20px; margin-top:20px; color:#d7ad4a; }
+
+.feedback-button { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:44px; padding:0 18px; border:1px solid #c9952a; border-radius:9px; background:#bd8a20; color:#16120a; font-size:14px; font-weight:700; text-decoration:none; transition:transform .2s ease, background .2s ease, box-shadow .2s ease; }
+.feedback-button:hover { background:#d7a436; box-shadow:0 6px 18px rgba(189,138,32,.2); transform:translateY(-1px); }
+.feedback-button:focus-visible { outline:2px solid #f4e2b4; outline-offset:3px; }
+@media (max-width:560px) { .settings-header { align-items:flex-start; flex-direction:column; gap:14px; } }
+.setting-row[hidden] { display:none; }
+
+/* Compact Onyx settings switch: centered thumb, equal visual weight. */
+.switch { flex:0 0 42px; display:block; padding:0; }
+.switch span { width:42px; height:22px; border:1px solid rgba(255,255,255,.08); border-radius:999px; background:#302f2d; transition:background .2s,border-color .2s; }
+.switch span::after { width:16px; height:16px; margin:2px; background:#f8f5ee; box-shadow:0 1px 3px rgba(0,0,0,.35); transition:transform .2s cubic-bezier(.2,.8,.2,1); }
+.switch input:checked + span { background:#bd8a20; border-color:#c9952a; }
+.switch input:checked + span::after { transform:translateX(20px); }
+.switch input:focus-visible + span { outline:2px solid rgba(215,173,74,.7); outline-offset:3px; }
+.shortcut-setting { margin-top:-1px; border-top-color:#242424; }
+.shortcut-setting h2 { font-size:15px; }
+.tool-subsetting { margin-left:26px; padding-top:15px; padding-bottom:15px; }
+.tool-subsetting.is-disabled { opacity:.42; }
+.tool-subsetting .switch input:disabled + span { cursor:not-allowed; }
+.shortcut-child { margin-left:52px; padding-top:14px; padding-bottom:14px; border-top-color:#242424; }
+.shortcut-child.is-disabled { opacity:.42; }
+
+.background-setting { padding:22px 0; border-top:1px solid #2b2b2b; }
+.background-actions { display:flex; align-items:center; gap:12px; margin-top:15px; }
+#homepage-background-input { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+.upload-button, .text-button { display:inline-flex; align-items:center; min-height:34px; padding:0 13px; border:1px solid rgba(215,173,74,.6); border-radius:8px; color:#f4e2b4; background:rgba(215,173,74,.12); cursor:pointer; font:600 13px/1 inherit; }
+.upload-plus { display:grid; place-items:center; width:18px; height:18px; margin-right:7px; border:1px solid rgba(244,226,180,.54); border-radius:5px; font-size:16px; font-weight:400; line-height:1; }
+.upload-button:hover, .text-button:hover { background:rgba(215,173,74,.2); }
+.text-button { border-color:#444; color:#bbb; background:transparent; }
+.background-preview { display:block; width:min(320px, 100%); height:128px; margin-top:15px; border:1px solid #3c3c3c; border-radius:10px; object-fit:cover; }
+.background-preview[hidden] { display:none; }

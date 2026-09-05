@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FocusBridge AI Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="settings">
+    <p class="eyebrow">FOCUSBRIDGE AI</p>
+    <div class="settings-header">
+      <h1>FocusBridge Settings</h1>
+      <a class="feedback-button" href="https://forms.gle/rJS3Z3VzszQ9zDxW8" target="_blank" rel="noopener noreferrer">Share Feedback &amp; Suggestions <span aria-hidden="true">↗</span></a>
+    </div>
+    <section class="name-setting"><label for="name-input">Name <span>(optional)</span></label><input id="name-input" maxlength="60" placeholder="Used in your greeting"></section>
+    <section class="setting-row">
+      <div><h2>FocusBridge Homepage</h2><p>Optional: turn this on to use FocusBridge as your focused New Tab experience. Leave it off to open Google instead.</p></div>
+      <label class="switch"><input id="homepage-toggle" type="checkbox" aria-label="Enable FocusBridge Homepage"><span></span></label>
+    </section>
+    <section class="background-setting">
+      <div><h2>Homepage background</h2><p>Choose a personal image for your FocusBridge homepage. It stays stored locally in this extension.</p></div>
+      <div class="background-actions">
+        <label class="upload-button" for="homepage-background-input"><span class="upload-plus" aria-hidden="true">+</span>Choose image</label>
+        <input id="homepage-background-input" type="file" accept="image/*" aria-label="Choose a homepage background image">
+        <button id="remove-homepage-background" class="text-button" type="button" hidden>Remove image</button>
+      </div>
+      <img id="homepage-background-preview" class="background-preview" alt="Selected homepage background preview" hidden>
+    </section>
+    <section class="setting-row">
+      <div><h2>Quick Tools</h2><p>Choose the tools shown on web pages.</p></div>
+    </section>
+    <section class="setting-row shortcut-setting tool-subsetting">
+      <div><h2>Screenshot</h2><p>Capture and crop an area on the current page.</p></div>
+      <label class="switch"><input id="screenshot-tool-toggle" type="checkbox" aria-label="Enable Screenshot"><span></span></label>
+    </section>
+    <section id="screenshot-hold-setting" class="setting-row shortcut-setting shortcut-child">
+      <div><h2>Screenshot shortcut</h2><p>Hold S for 1.5 seconds to start screenshot mode.</p></div>
+      <label class="switch"><input id="screenshot-hold-toggle" type="checkbox" aria-label="Enable Screenshot hold shortcut"><span></span></label>
+    </section>
+    <section class="setting-row shortcut-setting tool-subsetting">
+      <div><h2>Flynote</h2><p>Keep a persistent note on hand.</p></div>
+      <label class="switch"><input id="notepad-tool-toggle" type="checkbox" aria-label="Enable Notepad"><span></span></label>
+    </section>
+    <section id="notepad-hold-setting" class="setting-row shortcut-setting shortcut-child">
+      <div><h2>Flynote shortcut</h2><p>Hold N for 1.5 seconds to open Flynote.</p></div>
+      <label class="switch"><input id="notepad-hold-toggle" type="checkbox" aria-label="Enable Flynote hold shortcut"><span></span></label>
+    </section>
+    <section class="setting-row shortcut-setting tool-subsetting">
+      <div><h2>Unit Converter</h2><p>Convert units on the fly</p></div>
+      <label class="switch"><input id="unit-converter-tool-toggle" type="checkbox" aria-label="Enable Unit Converter"><span></span></label>
+    </section>
+    <section id="unit-converter-hold-setting" class="setting-row shortcut-setting shortcut-child">
+      <div><h2>Unit Converter shortcut</h2><p>Hold U for 1.5 seconds to open Unit Converter.</p></div>
+      <label class="switch"><input id="unit-converter-hold-toggle" type="checkbox" aria-label="Enable Unit Converter hold shortcut"><span></span></label>
+    </section>
+    <section id="attention-check-setting" class="setting-row shortcut-setting tool-subsetting">
+      <div><h2>FocusedEyes</h2><p>Quick key-press checks to test if you're still watching.</p></div>
+      <label class="switch"><input id="attention-check-toggle" type="checkbox" aria-label="Enable FocusedEyes"><span></span></label>
+    </section>
+    <section class="setting-row">
+      <div><h2>Nudge Buddy</h2><p>Show a friendly owl with a short encouragement when a focus nudge appears.</p></div>
+      <label class="switch"><input id="nudge-effect-toggle" type="checkbox" aria-label="Enable Nudge Buddy"><span></span></label>
+    </section>
+    <section class="setting-row">
+      <div><h2>Focus boost stickers</h2><p>Show animated milestone words at 30%, 60%, 90%, and timer completion.</p></div>
+      <label class="switch"><input id="boost-stickers-toggle" type="checkbox" aria-label="Enable focus boost stickers"><span></span></label>
+    </section>
+    <p id="saved" role="status"></p>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

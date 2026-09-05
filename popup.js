@@ -10,6 +10,7 @@ import { loadAIReflection, initAICoach } from './modules/ai-coach.js';
 
 // --- 1. INITIALIZATION & NAVIGATION ---
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settingsButton')?.addEventListener('click', () => chrome.runtime.openOptionsPage());
   // A. Load Initial Data
   displayDailyStory();
   initPomodoro();
@@ -44,16 +45,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // D. Theme Toggle
   const themeToggle = document.getElementById('themeToggle');
+  const syncThemeToggleLabel = (isDark) => themeToggle.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
   chrome.storage.local.get(['theme'], (res) => {
-    if (res.theme === 'dark') {
-      document.body.classList.add('dark-mode');
-      themeToggle.checked = true;
-    }
+    const isDark = res.theme !== 'light';
+    document.body.classList.toggle('dark-mode', isDark);
+    themeToggle.checked = isDark;
+    syncThemeToggleLabel(isDark);
   });
 
   themeToggle.addEventListener('change', () => {
     const isDark = themeToggle.checked;
     document.body.classList.toggle('dark-mode', isDark);
+    syncThemeToggleLabel(isDark);
     chrome.storage.local.set({ theme: isDark ? 'dark' : 'light' });
     // Reload charts if needed
     loadAllStats();
@@ -164,23 +167,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // J. What's New Banner
-  const whatsNewBanner = document.getElementById('whatsNewBanner');
-  const closeWhatsNew = document.getElementById('closeWhatsNew');
-
-  if (whatsNewBanner) {
-    chrome.storage.local.get(['whatsNewDismissed'], (res) => {
-      if (!res.whatsNewDismissed) {
-        whatsNewBanner.style.display = 'block';
+  // J. Permanent Homepage Banner
+  const homepageBanner = document.getElementById('homepageBanner');
+  if (homepageBanner) {
+    const openHomepageSettings = () => chrome.runtime.openOptionsPage();
+    homepageBanner.addEventListener('click', openHomepageSettings);
+    homepageBanner.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openHomepageSettings();
       }
     });
-
-    if (closeWhatsNew) {
-      closeWhatsNew.addEventListener('click', () => {
-        whatsNewBanner.style.display = 'none';
-        chrome.storage.local.set({ whatsNewDismissed: true });
-      });
-    }
+    homepageBanner.addEventListener('mouseenter', () => {
+      homepageBanner.style.transform = 'translateY(-1px)';
+      homepageBanner.style.boxShadow = 'inset 0 1px rgba(255,231,164,.2), 0 7px 18px rgba(0,0,0,.28)';
+    });
+    homepageBanner.addEventListener('mouseleave', () => {
+      homepageBanner.style.transform = '';
+      homepageBanner.style.boxShadow = '';
+    });
   }
 
   // Verify Button Listener
@@ -241,15 +246,9 @@ document.getElementById('startFocusBtn').onclick = () => {
 };
 
 document.getElementById('endFocusBtn').onclick = () => {
-  chrome.storage.local.remove(['userGoal', 'sessionActive', 'subTasks', 'pomoActive'], () => {
+  chrome.storage.local.remove(['userGoal', 'sessionActive', 'subTasks', 'pomoActive', 'pomoEndTime', 'workDuration', 'todaysGoal', 'todaysGoalTimestamp', 'todaysGoalDate'], () => {
     chrome.alarms.clearAll();
     chrome.runtime.sendMessage({ action: "broadcastEndSession" });
     location.reload();
-  });
-};
-
-document.getElementById('feedbackBtn').onclick = () => {
-  chrome.tabs.create({
-    url: 'https://forms.gle/rJS3Z3VzszQ9zDxW8'
   });
 };

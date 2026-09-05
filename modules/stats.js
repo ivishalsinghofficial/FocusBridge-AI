@@ -5,6 +5,20 @@ let weeklyChart = null;
 // We treat it as a global since it's not an ESM import in this setup
 const Chart = window.Chart;
 
+const barGlowPlugin = {
+    id: 'focusbridgeBarGlow',
+    beforeDatasetDraw(chart) {
+        const { ctx } = chart;
+        ctx.save();
+        ctx.shadowColor = 'rgba(255, 149, 0, 0.32)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 3;
+    },
+    afterDatasetDraw(chart) {
+        chart.ctx.restore();
+    }
+};
+
 export async function loadAllStats() {
     const res = await chrome.storage.local.get(['history']);
     const history = res.history || {};
@@ -23,14 +37,19 @@ export async function loadAllStats() {
     // DAILY WHEEL
     if (dailyChart) dailyChart.destroy();
     if (Chart) {
+        const ringGradient = wheelCtx.createLinearGradient(0, 0, 168, 168);
+        ringGradient.addColorStop(0, '#ffd08a');
+        ringGradient.addColorStop(0.52, '#ffa500');
+        ringGradient.addColorStop(1, '#e97900');
+
         dailyChart = new Chart(wheelCtx, {
             type: 'doughnut',
             data: {
                 datasets: [{
                     data: [todayMins, Math.max(0, 60 - todayMins)], // Goal is 60 mins
-                    backgroundColor: ['#ffa500', '#eee'],
+                    backgroundColor: [ringGradient, 'rgba(255, 255, 255, 0.10)'],
                     borderWidth: 0,
-                    cutout: '80%'
+                    cutout: '82%'
                 }]
             },
             options: { plugins: { tooltip: { enabled: false } }, maintainAspectRatio: false }
@@ -49,16 +68,32 @@ export async function loadAllStats() {
 
     if (weeklyChart) weeklyChart.destroy();
     if (Chart) {
+        const barGradient = barCtx.createLinearGradient(0, 0, 0, barCtx.canvas.height || 180);
+        barGradient.addColorStop(0, '#ffd08a');
+        barGradient.addColorStop(0.42, '#ffa500');
+        barGradient.addColorStop(1, '#e98200');
+
         weeklyChart = new Chart(barCtx, {
             type: 'bar',
             data: {
                 labels: labels,
-                datasets: [{ data: dataPoints, backgroundColor: '#ffa500', borderRadius: 4 }]
+                datasets: [{
+                    data: dataPoints,
+                    backgroundColor: barGradient,
+                    borderRadius: 999,
+                    borderSkipped: false,
+                    minBarLength: 3,
+                    barThickness: 14
+                }]
             },
             options: {
                 plugins: { legend: { display: false } },
-                scales: { y: { display: false, beginAtZero: true }, x: { grid: { display: false } } }
-            }
+                scales: {
+                    y: { display: false, beginAtZero: true },
+                    x: { grid: { display: false }, border: { display: false }, ticks: { color: 'rgba(255, 255, 255, 0.48)' } }
+                }
+            },
+            plugins: [barGlowPlugin]
         });
     }
 }
